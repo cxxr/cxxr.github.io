@@ -401,17 +401,258 @@ function resetWorld() {
   addRamp(900);
 }
 
-function addRamp(x) {
-  ramps.push({ x, len: 150, h: randInt(70, 85), back: 55, flag: COLORS[randInt(0, COLORS.length - 1)], done: false });
+// ---------- jump types & obstacle definitions ----------
+const JUMP_TYPES = [
+  'kicker',        // Classic Dirt Kicker
+  'steep_kicker',  // Steep Vert Kicker
+  'double_roller', // Double Roller
+  'triple_roller', // Triple Roller
+  'gap_jump',      // Canyon Gap Jump
+  'whale_tail',    // Wooden Whale Tail
+  'big_drop',      // Big Drop Platform
+  'tabletop',      // Tabletop Jump
+  'step_up',       // Step-Up Jump
+];
+
+const JUMP_INFO = {
+  kicker:        { name: 'KICKER',         label: 'Dirt Kicker 🚀',       badge: 'KICKER' },
+  steep_kicker:  { name: 'STEEP KICKER',   label: 'Steep Kicker ⚡',      badge: 'MEGA KICKER' },
+  double_roller: { name: 'DOUBLE ROLLER',  label: 'Double Roller 〰️',     badge: 'DOUBLE ROLLER' },
+  triple_roller: { name: 'TRIPLE ROLLER',  label: 'Triple Roller 🌊',     badge: 'TRIPLE ROLLER' },
+  gap_jump:      { name: 'GAP JUMP',       label: 'Canyon Gap ⚠️',        badge: 'GAP JUMP' },
+  whale_tail:    { name: 'WHALE TAIL',     label: 'Whale Tail 🐋',        badge: 'WHALE TAIL' },
+  big_drop:      { name: 'BIG DROP',       label: 'Big Drop ⬇️',          badge: 'BIG DROP' },
+  tabletop:      { name: 'TABLETOP',       label: 'Tabletop Jump 🛹',     badge: 'TABLETOP' },
+  step_up:       { name: 'STEP-UP',        label: 'Step-Up Jump ⬆️',      badge: 'STEP-UP' },
+};
+
+let lastJumpType = '';
+function getRandomJumpType() {
+  const pool = JUMP_TYPES.filter((t) => t !== lastJumpType);
+  const type = pool[randInt(0, pool.length - 1)];
+  lastJumpType = type;
+  return type;
+}
+
+function addRamp(x, forcedType = null) {
+  const type = forcedType || getRandomJumpType();
+  const flag = COLORS[randInt(0, COLORS.length - 1)];
+  const r = { x, type, flag, done: false, extraH: 0 };
+
+  if (type === 'steep_kicker') {
+    r.len = 135;
+    r.h = randInt(95, 115);
+    r.back = 50;
+    r.launchX = x + r.len;
+    r.launchH = r.h;
+    r.totalLen = r.len + r.back;
+    r.extraH = 40;
+  } else if (type === 'double_roller') {
+    r.len1 = 110;
+    r.h1 = 45;
+    r.len2 = 130;
+    r.h2 = 72;
+    r.totalLen = r.len1 + r.len2;
+    r.launchX = x + r.len1 + r.len2 * 0.54;
+    r.launchH = r.h2;
+    r.h = r.h2;
+  } else if (type === 'triple_roller') {
+    r.len1 = 90;
+    r.h1 = 40;
+    r.len2 = 95;
+    r.h2 = 52;
+    r.len3 = 120;
+    r.h3 = 76;
+    r.totalLen = r.len1 + r.len2 + r.len3;
+    r.launchX = x + r.len1 + r.len2 + r.len3 * 0.54;
+    r.launchH = r.h3;
+    r.h = r.h3;
+  } else if (type === 'gap_jump') {
+    r.len = 140;
+    r.h = 82;
+    r.gap = 180;
+    r.landLen = 120;
+    r.totalLen = r.len + r.gap + r.landLen;
+    r.launchX = x + r.len;
+    r.launchH = r.h;
+  } else if (type === 'whale_tail') {
+    r.len1 = 125;
+    r.h1 = 54;
+    r.len2 = 140;
+    r.h2 = 86;
+    r.back = 60;
+    r.totalLen = r.len1 + r.len2 + r.back;
+    r.launchX = x + r.len1 + r.len2 * 0.58;
+    r.launchH = r.h2;
+    r.h = r.h2;
+  } else if (type === 'big_drop') {
+    r.len1 = 130;
+    r.h = 96;
+    r.len2 = 85;
+    r.back = 65;
+    r.totalLen = r.len1 + r.len2 + r.back;
+    r.launchX = x + r.len1 + r.len2;
+    r.launchH = r.h;
+  } else if (type === 'tabletop') {
+    r.len1 = 135;
+    r.h = 80;
+    r.len2 = 90;
+    r.back = 75;
+    r.totalLen = r.len1 + r.len2 + r.back;
+    r.launchX = x + r.len1;
+    r.launchH = r.h;
+  } else if (type === 'step_up') {
+    r.len = 115;
+    r.h = 56;
+    r.landH = 82;
+    r.landLen = 120;
+    r.gap = 110;
+    r.totalLen = r.len + r.gap + r.landLen;
+    r.launchX = x + r.len;
+    r.launchH = r.h;
+    r.extraH = 25;
+  } else {
+    r.type = 'kicker';
+    r.len = 150;
+    r.h = randInt(72, 85);
+    r.back = 55;
+    r.totalLen = r.len + r.back;
+    r.launchX = x + r.len;
+    r.launchH = r.h;
+  }
+
+  ramps.push(r);
 }
 const currentRamp = () => ramps.find((r) => !r.done);
 
+function getRampHeightAndAngle(x, r) {
+  if (r.type === 'steep_kicker') {
+    const u = (x - r.x) / r.len;
+    if (u >= 0 && u <= 1) {
+      return { y: r.h * Math.pow(u, 2.2), angle: -Math.atan((2.2 * r.h * Math.pow(u, 1.2)) / r.len) };
+    }
+    const v = (x - r.x - r.len) / r.back;
+    if (v > 0 && v <= 1) return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
+  } else if (r.type === 'double_roller') {
+    const u1 = (x - r.x) / r.len1;
+    if (u1 >= 0 && u1 <= 1) {
+      const y = r.h1 * Math.sin(u1 * Math.PI);
+      const slope = (r.h1 * Math.PI * Math.cos(u1 * Math.PI)) / r.len1;
+      return { y, angle: -Math.atan(slope) };
+    }
+    const u2 = (x - r.x - r.len1) / r.len2;
+    if (u2 > 0 && u2 <= 1) {
+      const y = r.h2 * Math.sin(u2 * Math.PI);
+      const slope = (r.h2 * Math.PI * Math.cos(u2 * Math.PI)) / r.len2;
+      return { y, angle: -Math.atan(slope) };
+    }
+  } else if (r.type === 'triple_roller') {
+    const u1 = (x - r.x) / r.len1;
+    if (u1 >= 0 && u1 <= 1) {
+      const y = r.h1 * Math.sin(u1 * Math.PI);
+      const slope = (r.h1 * Math.PI * Math.cos(u1 * Math.PI)) / r.len1;
+      return { y, angle: -Math.atan(slope) };
+    }
+    const u2 = (x - r.x - r.len1) / r.len2;
+    if (u2 > 0 && u2 <= 1) {
+      const y = r.h2 * Math.sin(u2 * Math.PI);
+      const slope = (r.h2 * Math.PI * Math.cos(u2 * Math.PI)) / r.len2;
+      return { y, angle: -Math.atan(slope) };
+    }
+    const u3 = (x - r.x - r.len1 - r.len2) / r.len3;
+    if (u3 > 0 && u3 <= 1) {
+      const y = r.h3 * Math.sin(u3 * Math.PI);
+      const slope = (r.h3 * Math.PI * Math.cos(u3 * Math.PI)) / r.len3;
+      return { y, angle: -Math.atan(slope) };
+    }
+  } else if (r.type === 'gap_jump') {
+    const u = (x - r.x) / r.len;
+    if (u >= 0 && u <= 1) {
+      return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len) };
+    }
+    const landStart = r.x + r.len + r.gap;
+    const v = (x - landStart) / r.landLen;
+    if (v >= 0 && v <= 1) {
+      return { y: (r.h * 0.75) * (1 - v), angle: Math.atan((r.h * 0.75) / r.landLen) };
+    }
+  } else if (r.type === 'whale_tail') {
+    const u1 = (x - r.x) / r.len1;
+    if (u1 >= 0 && u1 <= 1) {
+      return { y: r.h1 * u1 * u1, angle: -Math.atan((2 * r.h1 * u1) / r.len1) };
+    }
+    const u2 = (x - r.x - r.len1) / r.len2;
+    if (u2 > 0 && u2 <= 1) {
+      const y = r.h1 + (r.h2 - r.h1) * Math.sin(u2 * Math.PI * 0.85);
+      const slope = ((r.h2 - r.h1) * Math.PI * 0.85 * Math.cos(u2 * Math.PI * 0.85)) / r.len2;
+      return { y, angle: -Math.atan(slope) };
+    }
+    const v = (x - r.x - r.len1 - r.len2) / r.back;
+    if (v > 0 && v <= 1) {
+      return { y: r.h1 * (1 - v), angle: Math.atan(r.h1 / r.back) };
+    }
+  } else if (r.type === 'big_drop') {
+    const u = (x - r.x) / r.len1;
+    if (u >= 0 && u <= 1) {
+      return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len1) };
+    }
+    const u2 = (x - r.x - r.len1) / r.len2;
+    if (u2 > 0 && u2 <= 1) {
+      return { y: r.h, angle: 0 };
+    }
+    const v = (x - r.x - r.len1 - r.len2) / r.back;
+    if (v > 0 && v <= 1) {
+      return { y: r.h * 0.4 * (1 - v), angle: Math.atan((r.h * 0.4) / r.back) };
+    }
+  } else if (r.type === 'tabletop') {
+    const u = (x - r.x) / r.len1;
+    if (u >= 0 && u <= 1) {
+      return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len1) };
+    }
+    const u2 = (x - r.x - r.len1) / r.len2;
+    if (u2 > 0 && u2 <= 1) {
+      return { y: r.h, angle: 0 };
+    }
+    const v = (x - r.x - r.len1 - r.len2) / r.back;
+    if (v > 0 && v <= 1) {
+      return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
+    }
+  } else if (r.type === 'step_up') {
+    const u = (x - r.x) / r.len;
+    if (u >= 0 && u <= 1) {
+      return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len) };
+    }
+    const landStart = r.x + r.len + r.gap;
+    const v = (x - landStart) / r.landLen;
+    if (v >= 0 && v <= 1) {
+      return { y: r.landH * (1 - v), angle: Math.atan(r.landH / r.landLen) };
+    }
+  } else {
+    const u = (x - r.x) / r.len;
+    if (u >= 0 && u <= 1) {
+      return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len) };
+    }
+    const v = (x - r.x - r.len) / r.back;
+    if (v > 0 && v <= 1) return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
+  }
+  return { y: 0, angle: 0 };
+}
+
 function groundHeightAt(x) {
   for (const r of ramps) {
-    const u = (x - r.x) / r.len;
-    if (u >= 0 && u <= 1) return r.h * u * u;
-    const v = (x - r.x - r.len) / r.back;
-    if (v > 0 && v <= 1) return r.h * (1 - v);
+    const res = getRampHeightAndAngle(x, r);
+    if (res.y > 0) return res.y;
+  }
+  return 0;
+}
+
+function groundAngleAt(x, ramp) {
+  if (ramp) {
+    const res = getRampHeightAndAngle(x, ramp);
+    if (res.y > 0 || res.angle !== 0) return res.angle;
+  }
+  for (const r of ramps) {
+    const res = getRampHeightAndAngle(x, r);
+    if (res.y > 0 || res.angle !== 0) return res.angle;
   }
   return 0;
 }
@@ -488,12 +729,15 @@ function autoTrick() {
 function launch(r) {
   phase = 'air';
   rider.airT = 0;
-  rider.launchH = r.h;
+  rider.launchH = r.launchH !== undefined ? r.launchH : r.h;
   rider.launchAng = rider.angle;
+  rider.launchExtraH = r.extraH || 0;
   r.done = true;
   sfx.whoosh();
   const tr = rider.trick;
-  addText(tr.name, VW * 0.64, 250, tr.points >= 1000 ? 58 : 50, tr.color);
+  const jinfo = JUMP_INFO[r.type] || JUMP_INFO.kicker;
+  addText(tr.name, VW * 0.64, 235, tr.points >= 1000 ? 56 : 48, tr.color);
+  addText(`off the ${jinfo.name}!`, VW * 0.64, 285, 26, '#ffe082');
 }
 
 function land() {
@@ -587,7 +831,8 @@ function update(dt) {
     const prog = (a, b) => ease(clamp((s - a) / (b - a), 0, 1));
     // 0→1→0: ease in, hold, ease out
     const hold = prog(0.1, 0.35) * (1 - prog(0.65, 0.9));
-    rider.y = rider.launchH * (1 - s) + 4 * tr.H * s * (1 - s);
+    const extraH = rider.launchExtraH || 0;
+    rider.y = rider.launchH * (1 - s) + 4 * (tr.H + extraH) * s * (1 - s);
     rider.angle = rider.launchAng * (1 - Math.min(1, s * 3)) + tr.rot * TAU * prog(0.08, 0.88);
     rider.spin = tr.spin * TAU * prog(0.1, 0.85);
     rider.whip = tr.whip * TAU * prog(0.15, 0.75);
@@ -600,9 +845,8 @@ function update(dt) {
   } else {
     rider.crank += (rider.speed * dt) / 30;
     rider.y = groundHeightAt(rider.x);
-    const u = ramp ? (rider.x - ramp.x) / ramp.len : -1;
-    rider.angle = u >= 0 && u <= 1 ? -Math.atan((2 * ramp.h * u) / ramp.len) : 0;
-    if (phase === 'go' && ramp && rider.x >= ramp.x + ramp.len) launch(ramp);
+    rider.angle = groundAngleAt(rider.x, ramp);
+    if (phase === 'go' && ramp && rider.x >= (ramp.launchX || (ramp.x + ramp.len))) launch(ramp);
     if (rider.wobbleT > 0) { rider.pose = 'wobble'; rider.blend = Math.min(1, rider.wobbleT); }
     else rider.blend = Math.max(0, rider.blend - dt * 4);
   }
@@ -621,7 +865,7 @@ function update(dt) {
   }
 
   cam = rider.x - VW * RIDER_X_FRAC;
-  ramps = ramps.filter((r) => r.x + r.len + r.back > cam - 200);
+  ramps = ramps.filter((r) => r.x + (r.totalLen || (r.len + (r.back || 60))) > cam - 200);
 
   for (const p of particles) {
     p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
@@ -1202,32 +1446,489 @@ function drawEnvironment(bgKey) {
   }
 }
 
+// =====================================================================
+//  Obstacle / Ramp Drawing Engines
+// =====================================================================
+
+function getRampColors(bgKey) {
+  let c1 = '#d09252', c2 = '#8a5527', lip = '#ecb77c', accent = '#fff3e0';
+  if (bgKey === 'skate') {
+    c1 = '#78909c'; c2 = '#455a64'; lip = '#eceff1'; accent = '#ff5252';
+  } else if (bgKey === 'urban') {
+    c1 = '#5d4037'; c2 = '#271c19'; lip = '#fbc02d'; accent = '#ffeb3b';
+  } else if (bgKey === 'mountain') {
+    c1 = '#6d4c2f'; c2 = '#3e2723'; lip = '#bcaaa4'; accent = '#81c784';
+  } else if (bgKey === 'beach') {
+    c1 = '#d7ccc8'; c2 = '#8d6e63'; lip = '#fff9c4'; accent = '#26c6da';
+  }
+  return { c1, c2, lip, accent };
+}
+
+function drawSign(x, label, color = '#ffd54f') {
+  ctx.strokeStyle = '#4e342e'; ctx.lineWidth = 3.5;
+  ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x, GROUND - 36); ctx.stroke();
+  ctx.save();
+  ctx.font = '700 11px Fredoka, sans-serif';
+  const tw = ctx.measureText(label).width;
+  ctx.fillStyle = '#1e293b';
+  if (ctx.roundRect) {
+    ctx.beginPath(); ctx.roundRect(x - tw / 2 - 6, GROUND - 54, tw + 12, 18, 4); ctx.fill();
+  } else {
+    ctx.fillRect(x - tw / 2 - 6, GROUND - 54, tw + 12, 18);
+  }
+  ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, GROUND - 45);
+  ctx.restore();
+}
+
+function drawFlag(fx, fy, flagColor, height = 55) {
+  ctx.strokeStyle = '#444'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, fy - height); ctx.stroke();
+  ctx.fillStyle = flagColor;
+  ctx.beginPath();
+  ctx.moveTo(fx, fy - height);
+  ctx.lineTo(fx + 28 + Math.sin(time * 8) * 3, fy - height + 9);
+  ctx.lineTo(fx, fy - height + 18);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawStandardKicker(r, x0, cols) {
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    ctx.lineTo(x0 + u * r.len, GROUND - r.h * u * u);
+  }
+  ctx.lineTo(x0 + r.len + r.back, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
+  ctx.fillStyle = g; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    const px = x0 + u * r.len, py = GROUND - r.h * u * u;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+  drawFlag(x0 + r.len + 14, GROUND - r.h * 0.75, r.flag, 55);
+}
+
+function drawSteepKicker(r, x0, cols) {
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    ctx.lineTo(x0 + u * r.len, GROUND - r.h * Math.pow(u, 2.2));
+  }
+  ctx.lineTo(x0 + r.len + r.back, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
+  ctx.fillStyle = g; ctx.fill();
+
+  // Internal support lines on side panel
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 2;
+  for (let i = 1; i < 4; i++) {
+    const u = i / 4;
+    const px = x0 + u * r.len, py = GROUND - r.h * Math.pow(u, 2.2);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, GROUND); ctx.stroke();
+  }
+
+  // Double glowing lip
+  ctx.strokeStyle = cols.accent; ctx.lineWidth = 7; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const u = i / 24;
+    const px = x0 + u * r.len, py = GROUND - r.h * Math.pow(u, 2.2);
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 3; ctx.stroke();
+
+  drawSign(x0 + 15, '⚡ STEEP', '#ffeb3b');
+  drawFlag(x0 + r.len + 14, GROUND - r.h * 0.8, r.flag, 65);
+}
+
+function drawDoubleRoller(r, x0, cols) {
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    ctx.lineTo(x0 + u * r.len1, GROUND - r.h1 * Math.sin(u * Math.PI));
+  }
+  for (let i = 0; i <= 22; i++) {
+    const u = i / 22;
+    ctx.lineTo(x0 + r.len1 + u * r.len2, GROUND - r.h2 * Math.sin(u * Math.PI));
+  }
+  ctx.lineTo(x0 + r.len1 + r.len2, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h2, 0, GROUND);
+  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
+  ctx.fillStyle = g; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    const px = x0 + u * r.len1, py = GROUND - r.h1 * Math.sin(u * Math.PI);
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  for (let i = 0; i <= 22; i++) {
+    const u = i / 22;
+    const px = x0 + r.len1 + u * r.len2, py = GROUND - r.h2 * Math.sin(u * Math.PI);
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  drawSign(x0 + 15, '〰️ 2X ROLLER', '#4fc3f7');
+  drawFlag(x0 + r.len1 + r.len2 * 0.54, GROUND - r.h2, r.flag, 48);
+}
+
+function drawTripleRoller(r, x0, cols) {
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 16; i++) {
+    const u = i / 16;
+    ctx.lineTo(x0 + u * r.len1, GROUND - r.h1 * Math.sin(u * Math.PI));
+  }
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    ctx.lineTo(x0 + r.len1 + u * r.len2, GROUND - r.h2 * Math.sin(u * Math.PI));
+  }
+  for (let i = 0; i <= 22; i++) {
+    const u = i / 22;
+    ctx.lineTo(x0 + r.len1 + r.len2 + u * r.len3, GROUND - r.h3 * Math.sin(u * Math.PI));
+  }
+  ctx.lineTo(x0 + r.len1 + r.len2 + r.len3, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h3, 0, GROUND);
+  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
+  ctx.fillStyle = g; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 16; i++) {
+    const u = i / 16;
+    const px = x0 + u * r.len1, py = GROUND - r.h1 * Math.sin(u * Math.PI);
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    const px = x0 + r.len1 + u * r.len2, py = GROUND - r.h2 * Math.sin(u * Math.PI);
+    ctx.lineTo(px, py);
+  }
+  for (let i = 0; i <= 22; i++) {
+    const u = i / 22;
+    const px = x0 + r.len1 + r.len2 + u * r.len3, py = GROUND - r.h3 * Math.sin(u * Math.PI);
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  drawSign(x0 + 15, '🌊 3X ROLLER', '#81c784');
+  drawFlag(x0 + r.len1 + r.len2 + r.len3 * 0.54, GROUND - r.h3, r.flag, 48);
+}
+
+function drawGapJump(r, x0, cols) {
+  // 1. Takeoff ramp
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    ctx.lineTo(x0 + u * r.len, GROUND - r.h * u * u);
+  }
+  ctx.lineTo(x0 + r.len, GROUND);
+  ctx.closePath();
+  const g1 = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  g1.addColorStop(0, cols.c1); g1.addColorStop(1, cols.c2);
+  ctx.fillStyle = g1; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    const px = x0 + u * r.len, py = GROUND - r.h * u * u;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+
+  // 2. Canyon Gap Void / Hazard Pit
+  const pitX = x0 + r.len;
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(pitX, GROUND, r.gap, 26);
+  for (let s = 0; s < r.gap; s += 24) {
+    ctx.fillStyle = (s / 24) % 2 === 0 ? '#f59e0b' : '#1e293b';
+    ctx.fillRect(pitX + s, GROUND - 4, Math.min(24, r.gap - s), 6);
+  }
+  ctx.fillStyle = '#ef4444'; ctx.font = '700 13px Fredoka, sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('⚠️ GAP ⚠️', pitX + r.gap * 0.5, GROUND + 17);
+
+  // 3. Landing ramp
+  const landX = pitX + r.gap;
+  const landH = r.h * 0.75;
+  ctx.beginPath();
+  ctx.moveTo(landX, GROUND - landH);
+  for (let i = 0; i <= 18; i++) {
+    const v = i / 18;
+    ctx.lineTo(landX + v * r.landLen, GROUND - landH * (1 - v));
+  }
+  ctx.lineTo(landX, GROUND);
+  ctx.closePath();
+  const g2 = ctx.createLinearGradient(0, GROUND - landH, 0, GROUND);
+  g2.addColorStop(0, cols.c1); g2.addColorStop(1, cols.c2);
+  ctx.fillStyle = g2; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 4.5;
+  ctx.beginPath(); ctx.moveTo(landX, GROUND - landH); ctx.lineTo(landX + r.landLen, GROUND); ctx.stroke();
+
+  drawSign(x0 + 15, '⚠️ GAP JUMP', '#ef4444');
+  drawFlag(x0 + r.len, GROUND - r.h, r.flag, 52);
+  drawFlag(landX + r.landLen, GROUND - 10, '#ffffff', 42);
+}
+
+function drawWhaleTail(r, x0, cols) {
+  const deckStart = x0 + r.len1;
+  const deckEnd = deckStart + r.len2;
+  const deckCrest = deckStart + r.len2 * 0.54;
+
+  // Wooden support trestles under structure
+  ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 4.5; ctx.lineCap = 'square';
+  for (let px = x0 + 25; px <= deckEnd; px += 32) {
+    let topY = GROUND;
+    if (px < deckStart) {
+      const u = (px - x0) / r.len1;
+      topY = GROUND - r.h1 * u * u;
+    } else {
+      const u = (px - deckStart) / r.len2;
+      topY = GROUND - (r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85));
+    }
+    ctx.beginPath(); ctx.moveTo(px, GROUND); ctx.lineTo(px, topY); ctx.stroke();
+    if (px + 32 <= deckEnd) {
+      ctx.strokeStyle = 'rgba(62,39,35,0.6)'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(px, GROUND); ctx.lineTo(px + 32, topY);
+      ctx.moveTo(px, topY); ctx.lineTo(px + 32, GROUND);
+      ctx.stroke();
+      ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 4.5;
+    }
+  }
+
+  // Wooden riding deck outline
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 16; i++) {
+    const u = i / 16;
+    ctx.lineTo(x0 + u * r.len1, GROUND - r.h1 * u * u);
+  }
+  for (let i = 0; i <= 22; i++) {
+    const u = i / 22;
+    const y = r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85);
+    ctx.lineTo(deckStart + u * r.len2, GROUND - y);
+  }
+  ctx.lineTo(deckEnd + r.back, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h2, 0, GROUND);
+  g.addColorStop(0, '#8d6e63'); g.addColorStop(1, '#4e342e');
+  ctx.fillStyle = g; ctx.fill();
+
+  // Wooden plank surface
+  ctx.strokeStyle = '#bcaaa4'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 16; i++) {
+    const u = i / 16;
+    const px = x0 + u * r.len1, py = GROUND - r.h1 * u * u;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  for (let i = 0; i <= 22; i++) {
+    const u = i / 22;
+    const y = r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85);
+    ctx.lineTo(deckStart + u * r.len2, GROUND - y);
+  }
+  ctx.stroke();
+
+  // Safety handrails on deck
+  ctx.strokeStyle = '#d7ccc8'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    const y = r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85) + 16;
+    const px = deckStart + u * r.len2, py = GROUND - y;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+
+  drawSign(x0 + 15, '🐋 WHALE TAIL', '#ffb74d');
+  drawFlag(deckCrest, GROUND - r.h2, r.flag, 52);
+}
+
+function drawBigDrop(r, x0, cols) {
+  const flatStart = x0 + r.len1;
+  const dropLedge = flatStart + r.len2;
+
+  // Support towers holding up the high runway
+  ctx.strokeStyle = '#263238'; ctx.lineWidth = 5; ctx.lineCap = 'square';
+  for (let px = x0 + 35; px <= dropLedge; px += 35) {
+    let topY = GROUND;
+    if (px < flatStart) {
+      const u = (px - x0) / r.len1;
+      topY = GROUND - r.h * u * u;
+    } else {
+      topY = GROUND - r.h;
+    }
+    ctx.beginPath(); ctx.moveTo(px, GROUND); ctx.lineTo(px, topY); ctx.stroke();
+    if (px + 35 <= dropLedge) {
+      ctx.strokeStyle = 'rgba(55,71,79,0.5)'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(px, GROUND); ctx.lineTo(px + 35, topY);
+      ctx.moveTo(px, topY); ctx.lineTo(px + 35, GROUND);
+      ctx.stroke();
+      ctx.strokeStyle = '#263238'; ctx.lineWidth = 5;
+    }
+  }
+
+  // Ramp body
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    ctx.lineTo(x0 + u * r.len1, GROUND - r.h * u * u);
+  }
+  ctx.lineTo(dropLedge, GROUND - r.h);
+  ctx.lineTo(dropLedge, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
+  ctx.fillStyle = g; ctx.fill();
+
+  // Runway deck surface
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    const px = x0 + u * r.len1, py = GROUND - r.h * u * u;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.lineTo(dropLedge, GROUND - r.h);
+  ctx.stroke();
+
+  // Hazard striped drop ledge edge
+  for (let s = 0; s < 24; s += 6) {
+    ctx.fillStyle = s % 12 === 0 ? '#fbc02d' : '#212121';
+    ctx.fillRect(dropLedge - s - 6, GROUND - r.h - 1, 6, 6);
+  }
+
+  // Landing slope below
+  const landLen = r.back || 65;
+  ctx.beginPath(); ctx.moveTo(dropLedge, GROUND - r.h * 0.4);
+  ctx.lineTo(dropLedge + landLen, GROUND);
+  ctx.lineTo(dropLedge, GROUND); ctx.closePath();
+  ctx.fillStyle = cols.c2; ctx.fill();
+
+  drawSign(x0 + 15, '⬇️ BIG DROP', '#e040fb');
+  drawFlag(dropLedge, GROUND - r.h, r.flag, 56);
+}
+
+function drawTabletop(r, x0, cols) {
+  const tableStart = x0 + r.len1;
+  const tableEnd = tableStart + r.len2;
+  const landEnd = tableEnd + r.back;
+
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    ctx.lineTo(x0 + u * r.len1, GROUND - r.h * u * u);
+  }
+  ctx.lineTo(tableEnd, GROUND - r.h);
+  ctx.lineTo(landEnd, GROUND);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
+  ctx.fillStyle = g; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    const px = x0 + u * r.len1, py = GROUND - r.h * u * u;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.lineTo(tableEnd, GROUND - r.h);
+  ctx.lineTo(landEnd, GROUND);
+  ctx.stroke();
+
+  drawSign(x0 + 15, '🛹 TABLETOP', '#ab47bc');
+  drawFlag(tableStart + 10, GROUND - r.h, r.flag, 50);
+}
+
+function drawStepUp(r, x0, cols) {
+  // Takeoff kicker
+  ctx.beginPath(); ctx.moveTo(x0, GROUND);
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    ctx.lineTo(x0 + u * r.len, GROUND - r.h * u * u);
+  }
+  ctx.lineTo(x0 + r.len, GROUND);
+  ctx.closePath();
+  const g1 = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  g1.addColorStop(0, cols.c1); g1.addColorStop(1, cols.c2);
+  ctx.fillStyle = g1; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 18; i++) {
+    const u = i / 18;
+    const px = x0 + u * r.len, py = GROUND - r.h * u * u;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+
+  // Elevated step-up landing table
+  const landStart = x0 + r.len + r.gap;
+  const landEnd = landStart + r.landLen;
+  ctx.beginPath();
+  ctx.moveTo(landStart, GROUND);
+  ctx.lineTo(landStart, GROUND - r.landH);
+  ctx.lineTo(landStart + r.landLen * 0.4, GROUND - r.landH);
+  ctx.lineTo(landEnd, GROUND);
+  ctx.closePath();
+  const g2 = ctx.createLinearGradient(0, GROUND - r.landH, 0, GROUND);
+  g2.addColorStop(0, cols.c1); g2.addColorStop(1, cols.c2);
+  ctx.fillStyle = g2; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(landStart, GROUND - r.landH);
+  ctx.lineTo(landStart + r.landLen * 0.4, GROUND - r.landH);
+  ctx.lineTo(landEnd, GROUND);
+  ctx.stroke();
+
+  drawSign(x0 + 15, '⬆️ STEP-UP', '#00e676');
+  drawFlag(x0 + r.len, GROUND - r.h, r.flag, 48);
+  drawFlag(landStart + r.landLen * 0.4, GROUND - r.landH, '#ffffff', 48);
+}
+
 function drawRamp(r, bgKey = 'farm') {
   const x0 = r.x - cam;
-  if (x0 > VW + 50 || x0 + r.len + r.back < -50) return;
-  ctx.beginPath(); ctx.moveTo(x0, GROUND);
-  for (let i = 0; i <= 24; i++) { const u = i / 24; ctx.lineTo(x0 + u * r.len, GROUND - r.h * u * u); }
-  ctx.lineTo(x0 + r.len + r.back, GROUND); ctx.closePath();
+  const totalLen = r.totalLen || (r.len + (r.back || 60));
+  if (x0 > VW + 80 || x0 + totalLen < -100) return;
 
-  let c1 = '#d09252', c2 = '#8a5527', lip = '#ecb77c';
-  if (bgKey === 'skate') { c1 = '#78909c'; c2 = '#455a64'; lip = '#eceff1'; }
-  else if (bgKey === 'urban') { c1 = '#5d4037'; c2 = '#271c19'; lip = '#fbc02d'; }
-  else if (bgKey === 'mountain') { c1 = '#6d4c2f'; c2 = '#3e2723'; lip = '#bcaaa4'; }
-  else if (bgKey === 'beach') { c1 = '#d7ccc8'; c2 = '#8d6e63'; lip = '#fff9c4'; }
+  const cols = getRampColors(bgKey);
 
-  const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
-  g.addColorStop(0, c1); g.addColorStop(1, c2);
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
-  ctx.beginPath();
-  for (let i = 0; i <= 24; i++) { const u = i / 24; const px = x0 + u * r.len, py = GROUND - r.h * u * u; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
-  ctx.stroke();
-  // flag on the lip
-  const fx = x0 + r.len + 14, fy = GROUND - r.h * 0.75;
-  ctx.strokeStyle = '#444'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, fy - 55); ctx.stroke();
-  ctx.fillStyle = r.flag;
-  ctx.beginPath(); ctx.moveTo(fx, fy - 55); ctx.lineTo(fx + 30 + Math.sin(time * 8) * 3, fy - 46); ctx.lineTo(fx, fy - 37); ctx.closePath(); ctx.fill();
+  if (r.type === 'steep_kicker') {
+    drawSteepKicker(r, x0, cols);
+  } else if (r.type === 'double_roller') {
+    drawDoubleRoller(r, x0, cols);
+  } else if (r.type === 'triple_roller') {
+    drawTripleRoller(r, x0, cols);
+  } else if (r.type === 'gap_jump') {
+    drawGapJump(r, x0, cols);
+  } else if (r.type === 'whale_tail') {
+    drawWhaleTail(r, x0, cols);
+  } else if (r.type === 'big_drop') {
+    drawBigDrop(r, x0, cols);
+  } else if (r.type === 'tabletop') {
+    drawTabletop(r, x0, cols);
+  } else if (r.type === 'step_up') {
+    drawStepUp(r, x0, cols);
+  } else {
+    drawStandardKicker(r, x0, cols);
+  }
 }
 
 function drawParticles() {

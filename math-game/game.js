@@ -405,8 +405,6 @@ function resetWorld() {
 const JUMP_TYPES = [
   'kicker',        // Classic Dirt Kicker
   'steep_kicker',  // Steep Vert Kicker
-  'double_roller', // Double Roller
-  'triple_roller', // Triple Roller
   'gap_jump',      // Canyon Gap Jump
   'whale_tail',    // Wooden Whale Tail
   'big_drop',      // Big Drop Platform
@@ -417,8 +415,6 @@ const JUMP_TYPES = [
 const JUMP_INFO = {
   kicker:        { name: 'KICKER',         label: 'Dirt Kicker 🚀',       badge: 'KICKER' },
   steep_kicker:  { name: 'STEEP KICKER',   label: 'Steep Kicker ⚡',      badge: 'MEGA KICKER' },
-  double_roller: { name: 'DOUBLE ROLLER',  label: 'Double Roller 〰️',     badge: 'DOUBLE ROLLER' },
-  triple_roller: { name: 'TRIPLE ROLLER',  label: 'Triple Roller 🌊',     badge: 'TRIPLE ROLLER' },
   gap_jump:      { name: 'GAP JUMP',       label: 'Canyon Gap ⚠️',        badge: 'GAP JUMP' },
   whale_tail:    { name: 'WHALE TAIL',     label: 'Whale Tail 🐋',        badge: 'WHALE TAIL' },
   big_drop:      { name: 'BIG DROP',       label: 'Big Drop ⬇️',          badge: 'BIG DROP' },
@@ -447,26 +443,6 @@ function addRamp(x, forcedType = null) {
     r.launchH = r.h;
     r.totalLen = r.len + r.back;
     r.extraH = 40;
-  } else if (type === 'double_roller') {
-    r.len1 = 110;
-    r.h1 = 45;
-    r.len2 = 130;
-    r.h2 = 72;
-    r.totalLen = r.len1 + r.len2;
-    r.launchX = x + r.len1 + r.len2 * 0.54;
-    r.launchH = r.h2;
-    r.h = r.h2;
-  } else if (type === 'triple_roller') {
-    r.len1 = 90;
-    r.h1 = 40;
-    r.len2 = 95;
-    r.h2 = 52;
-    r.len3 = 120;
-    r.h3 = 76;
-    r.totalLen = r.len1 + r.len2 + r.len3;
-    r.launchX = x + r.len1 + r.len2 + r.len3 * 0.54;
-    r.launchH = r.h3;
-    r.h = r.h3;
   } else if (type === 'gap_jump') {
     r.len = 140;
     r.h = 82;
@@ -533,38 +509,6 @@ function getRampHeightAndAngle(x, r) {
     }
     const v = (x - r.x - r.len) / r.back;
     if (v > 0 && v <= 1) return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
-  } else if (r.type === 'double_roller') {
-    const u1 = (x - r.x) / r.len1;
-    if (u1 >= 0 && u1 <= 1) {
-      const y = r.h1 * Math.sin(u1 * Math.PI);
-      const slope = (r.h1 * Math.PI * Math.cos(u1 * Math.PI)) / r.len1;
-      return { y, angle: -Math.atan(slope) };
-    }
-    const u2 = (x - r.x - r.len1) / r.len2;
-    if (u2 > 0 && u2 <= 1) {
-      const y = r.h2 * Math.sin(u2 * Math.PI);
-      const slope = (r.h2 * Math.PI * Math.cos(u2 * Math.PI)) / r.len2;
-      return { y, angle: -Math.atan(slope) };
-    }
-  } else if (r.type === 'triple_roller') {
-    const u1 = (x - r.x) / r.len1;
-    if (u1 >= 0 && u1 <= 1) {
-      const y = r.h1 * Math.sin(u1 * Math.PI);
-      const slope = (r.h1 * Math.PI * Math.cos(u1 * Math.PI)) / r.len1;
-      return { y, angle: -Math.atan(slope) };
-    }
-    const u2 = (x - r.x - r.len1) / r.len2;
-    if (u2 > 0 && u2 <= 1) {
-      const y = r.h2 * Math.sin(u2 * Math.PI);
-      const slope = (r.h2 * Math.PI * Math.cos(u2 * Math.PI)) / r.len2;
-      return { y, angle: -Math.atan(slope) };
-    }
-    const u3 = (x - r.x - r.len1 - r.len2) / r.len3;
-    if (u3 > 0 && u3 <= 1) {
-      const y = r.h3 * Math.sin(u3 * Math.PI);
-      const slope = (r.h3 * Math.PI * Math.cos(u3 * Math.PI)) / r.len3;
-      return { y, angle: -Math.atan(slope) };
-    }
   } else if (r.type === 'gap_jump') {
     const u = (x - r.x) / r.len;
     if (u >= 0 && u <= 1) {
@@ -1551,83 +1495,6 @@ function drawSteepKicker(r, x0, cols) {
   drawFlag(x0 + r.len + 14, GROUND - r.h * 0.8, r.flag, 65);
 }
 
-function drawDoubleRoller(r, x0, cols) {
-  ctx.beginPath(); ctx.moveTo(x0, GROUND);
-  for (let i = 0; i <= 18; i++) {
-    const u = i / 18;
-    ctx.lineTo(x0 + u * r.len1, GROUND - r.h1 * Math.sin(u * Math.PI));
-  }
-  for (let i = 0; i <= 22; i++) {
-    const u = i / 22;
-    ctx.lineTo(x0 + r.len1 + u * r.len2, GROUND - r.h2 * Math.sin(u * Math.PI));
-  }
-  ctx.lineTo(x0 + r.len1 + r.len2, GROUND);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(0, GROUND - r.h2, 0, GROUND);
-  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
-  ctx.fillStyle = g; ctx.fill();
-
-  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
-  ctx.beginPath();
-  for (let i = 0; i <= 18; i++) {
-    const u = i / 18;
-    const px = x0 + u * r.len1, py = GROUND - r.h1 * Math.sin(u * Math.PI);
-    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-  }
-  for (let i = 0; i <= 22; i++) {
-    const u = i / 22;
-    const px = x0 + r.len1 + u * r.len2, py = GROUND - r.h2 * Math.sin(u * Math.PI);
-    ctx.lineTo(px, py);
-  }
-  ctx.stroke();
-
-  drawSign(x0 + 15, '〰️ 2X ROLLER', '#4fc3f7');
-  drawFlag(x0 + r.len1 + r.len2 * 0.54, GROUND - r.h2, r.flag, 48);
-}
-
-function drawTripleRoller(r, x0, cols) {
-  ctx.beginPath(); ctx.moveTo(x0, GROUND);
-  for (let i = 0; i <= 16; i++) {
-    const u = i / 16;
-    ctx.lineTo(x0 + u * r.len1, GROUND - r.h1 * Math.sin(u * Math.PI));
-  }
-  for (let i = 0; i <= 18; i++) {
-    const u = i / 18;
-    ctx.lineTo(x0 + r.len1 + u * r.len2, GROUND - r.h2 * Math.sin(u * Math.PI));
-  }
-  for (let i = 0; i <= 22; i++) {
-    const u = i / 22;
-    ctx.lineTo(x0 + r.len1 + r.len2 + u * r.len3, GROUND - r.h3 * Math.sin(u * Math.PI));
-  }
-  ctx.lineTo(x0 + r.len1 + r.len2 + r.len3, GROUND);
-  ctx.closePath();
-  const g = ctx.createLinearGradient(0, GROUND - r.h3, 0, GROUND);
-  g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
-  ctx.fillStyle = g; ctx.fill();
-
-  ctx.strokeStyle = cols.lip; ctx.lineWidth = 5; ctx.lineCap = 'round';
-  ctx.beginPath();
-  for (let i = 0; i <= 16; i++) {
-    const u = i / 16;
-    const px = x0 + u * r.len1, py = GROUND - r.h1 * Math.sin(u * Math.PI);
-    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-  }
-  for (let i = 0; i <= 18; i++) {
-    const u = i / 18;
-    const px = x0 + r.len1 + u * r.len2, py = GROUND - r.h2 * Math.sin(u * Math.PI);
-    ctx.lineTo(px, py);
-  }
-  for (let i = 0; i <= 22; i++) {
-    const u = i / 22;
-    const px = x0 + r.len1 + r.len2 + u * r.len3, py = GROUND - r.h3 * Math.sin(u * Math.PI);
-    ctx.lineTo(px, py);
-  }
-  ctx.stroke();
-
-  drawSign(x0 + 15, '🌊 3X ROLLER', '#81c784');
-  drawFlag(x0 + r.len1 + r.len2 + r.len3 * 0.54, GROUND - r.h3, r.flag, 48);
-}
-
 function drawGapJump(r, x0, cols) {
   // 1. Takeoff ramp
   ctx.beginPath(); ctx.moveTo(x0, GROUND);
@@ -1912,10 +1779,6 @@ function drawRamp(r, bgKey = 'farm') {
 
   if (r.type === 'steep_kicker') {
     drawSteepKicker(r, x0, cols);
-  } else if (r.type === 'double_roller') {
-    drawDoubleRoller(r, x0, cols);
-  } else if (r.type === 'triple_roller') {
-    drawTripleRoller(r, x0, cols);
   } else if (r.type === 'gap_jump') {
     drawGapJump(r, x0, cols);
   } else if (r.type === 'whale_tail') {

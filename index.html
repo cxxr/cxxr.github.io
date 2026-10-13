@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>BMX Math Jam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- In-game HUD -->
+  <div id="hud" class="hidden">
+    <div class="pill" id="hud-score">⭐ 0</div>
+    <div class="pill" id="hud-jump">Jump 1 / 10</div>
+    <div class="pill hidden" id="hud-streak">🔥 x2</div>
+    <div class="hud-right">
+      <button class="icon-btn" id="btn-mute" title="Sound on/off">🔊</button>
+      <button class="icon-btn" id="btn-home" title="Menu">🏠</button>
+    </div>
+  </div>
+
+  <!-- Math problem card -->
+  <div id="quiz" class="hidden">
+    <div id="problem"><span id="q-text">3 + 4</span> = <span id="q-answer">?</span></div>
+    <div id="timer"><div id="timer-fill"></div></div>
+    <div id="trick-label"></div>
+    <div id="feedback"></div>
+  </div>
+
+  <!-- Number pad -->
+  <div id="pad" class="hidden"></div>
+
+  <!-- Main menu -->
+  <div id="menu" class="overlay">
+    <div class="card">
+      <h1>BMX <span>Math</span> Jam</h1>
+      <p class="tag">Solve the problem to hit the jump.<br>The <b>faster</b> you answer, the <b>bigger</b> the trick!</p>
+
+      <h3>Pick your level</h3>
+      <div id="levels"></div>
+
+      <h3>Pick your bike</h3>
+      <div id="colors"></div>
+
+      <button id="btn-start" class="big-btn">RIDE! 🚲</button>
+      <div id="best-line"></div>
+
+      <h3>Trick guide</h3>
+      <div id="guide"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="overlay hidden">
+    <div class="card">
+      <h2 id="res-title">Awesome!</h2>
+      <div id="res-stars"></div>
+      <div id="res-score">0</div>
+      <div id="res-best" class="hidden">🏆 NEW BEST SCORE! 🏆</div>
+      <div id="res-stats"></div>
+      <div class="btn-row">
+        <button id="btn-again" class="big-btn">Ride Again! 🔁</button>
+        <button id="btn-menu" class="big-btn alt">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

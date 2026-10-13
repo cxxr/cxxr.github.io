@@ -48,10 +48,11 @@ function shade(hex, amt) {
 // ---------- configuration ----------
 // th = seconds thresholds for [mega, big, cool, nice]; slower = easy tier
 const LEVELS = {
-  rookie: { name: 'Rookie', desc: 'Adding up to 10', th: [3, 5, 8, 12] },
-  rider:  { name: 'Rider',  desc: '+ and − up to 20', th: [4, 6, 9, 14] },
-  pro:    { name: 'Pro',    desc: '+ and − up to 50', th: [6, 9, 13, 18] },
-  legend: { name: 'Legend', desc: '+ − up to 100 and ×', th: [6, 9, 13, 18] },
+  rookie:  { name: 'Rookie',    desc: 'Adding up to 10', th: [3, 5, 8, 12] },
+  rider:   { name: 'Rider',     desc: '+ and − up to 20', th: [4, 6, 9, 14] },
+  pro:     { name: 'Pro',       desc: '+ and − up to 50', th: [6, 9, 13, 18] },
+  legend:  { name: 'Legend',    desc: '+ − up to 100 and ×', th: [6, 9, 13, 18] },
+  dynamic: { name: '⚡ Dynamic Mode', desc: 'Adapts to streak! 3 misses in a row = out', th: [3, 5, 8, 12] },
 };
 
 // Trick animation channels (all optional):
@@ -159,6 +160,117 @@ function makeProblem(level) {
   return { text: q, answer: ans };
 }
 
+// Adaptive problem generator for Dynamic Mode:
+// Stage 1: simple additions up to 7
+// Stage 2: additions up to 10
+// Stage 3: additions up to 14, subtractions up to 10
+// Stage 4: additions up to 20, subtractions up to 18
+// Stage 5: additions up to 35, subtractions up to 30, x2 and x10
+// Stage 6: additions up to 60, subtractions up to 50, x2, x3, x4, x5, x10
+// Stage 7: additions/subtractions up to 100, tables 2-9
+// Stage 8+: full mixed tables and 2-digit sums
+function makeDynamicProblem(stage) {
+  let a, b, op, ans, q;
+  for (let tries = 0; tries < 30; tries++) {
+    if (stage === 1) {
+      op = '+';
+      a = randInt(1, 5);
+      b = randInt(1, 7 - a);
+    } else if (stage === 2) {
+      op = '+';
+      a = randInt(2, 7);
+      b = randInt(1, 10 - a);
+    } else if (stage === 3) {
+      if (Math.random() < 0.55) {
+        op = '+';
+        a = randInt(3, 9);
+        b = randInt(2, 14 - a);
+      } else {
+        op = '−';
+        a = randInt(3, 10);
+        b = randInt(1, a - 1);
+      }
+    } else if (stage === 4) {
+      if (Math.random() < 0.5) {
+        op = '+';
+        a = randInt(5, 12);
+        b = randInt(3, 20 - a);
+      } else {
+        op = '−';
+        a = randInt(6, 18);
+        b = randInt(2, a - 2);
+      }
+    } else if (stage === 5) {
+      const r = Math.random();
+      if (r < 0.4) {
+        op = '+';
+        a = randInt(8, 25);
+        b = randInt(4, 35 - a);
+      } else if (r < 0.7) {
+        op = '−';
+        a = randInt(12, 30);
+        b = randInt(3, a - 3);
+      } else {
+        op = '×';
+        a = [2, 10][randInt(0, 1)];
+        b = randInt(2, 9);
+        if (Math.random() < 0.5) [a, b] = [b, a];
+      }
+    } else if (stage === 6) {
+      const r = Math.random();
+      if (r < 0.35) {
+        op = '+';
+        a = randInt(12, 45);
+        b = randInt(6, 60 - a);
+      } else if (r < 0.65) {
+        op = '−';
+        a = randInt(15, 50);
+        b = randInt(5, a - 4);
+      } else {
+        op = '×';
+        a = [2, 3, 4, 5, 10][randInt(0, 4)];
+        b = randInt(2, 9);
+        if (Math.random() < 0.5) [a, b] = [b, a];
+      }
+    } else if (stage === 7) {
+      const r = Math.random();
+      if (r < 0.3) {
+        op = '+';
+        a = randInt(20, 75);
+        b = randInt(8, 100 - a);
+      } else if (r < 0.6) {
+        op = '−';
+        a = randInt(25, 80);
+        b = randInt(8, a - 5);
+      } else {
+        op = '×';
+        a = randInt(2, 9);
+        b = randInt(2, 9);
+      }
+    } else {
+      const r = Math.random();
+      if (r < 0.3) {
+        op = '+';
+        a = randInt(25, 85);
+        b = randInt(10, 100 - a);
+      } else if (r < 0.6) {
+        op = '−';
+        a = randInt(35, 100);
+        b = randInt(10, a - 5);
+      } else {
+        op = '×';
+        a = randInt(4, 9);
+        b = randInt(4, 9);
+      }
+    }
+    ans = op === '+' ? a + b : op === '−' ? a - b : a * b;
+    q = `${a} ${op} ${b}`;
+    if (q !== lastQ) break;
+  }
+  lastQ = q;
+  return { text: q, answer: ans, stage };
+}
+
 // ---------- sound (synthesized, no files needed) ----------
 let actx = null;
 let muted = localStorage.getItem('bmx_muted') === '1';
@@ -245,7 +357,11 @@ let typed = '';
 const clouds = Array.from({ length: 7 }, (_, i) => ({ x: i * 260 + rand(0, 150), y: rand(40, 220), s: rand(0.6, 1.3), p: rand(0.05, 0.15) }));
 
 function newGame() {
-  game = { score: 0, jump: 0, streak: 0, bestStreak: 0, correct: 0, fastest: null, bestTrickIdx: 99, bestTrickName: '' };
+  game = {
+    score: 0, jump: 0, streak: 0, bestStreak: 0, correct: 0,
+    fastest: null, bestTrickIdx: 99, bestTrickName: '',
+    diffStage: 1, maxStage: 1, missStreak: 0,
+  };
 }
 
 function resetWorld() {
@@ -276,14 +392,27 @@ function groundHeightAt(x) {
 // ---------- question flow ----------
 function startQuestion() {
   phase = 'question';
-  problem = makeProblem(settings.level);
+  problem = settings.level === 'dynamic' ? makeDynamicProblem(game ? (game.diffStage || 1) : 1) : makeProblem(settings.level);
   typed = '';
   qStart = performance.now();
   showQuiz();
 }
 
+function getThresholds() {
+  if (settings.level === 'dynamic') {
+    const s = game ? (game.diffStage || 1) : 1;
+    return [
+      3 + (s - 1) * 0.5,
+      5 + (s - 1) * 0.7,
+      8 + (s - 1) * 1.0,
+      12 + (s - 1) * 1.2,
+    ];
+  }
+  return LEVELS[settings.level].th;
+}
+
 function tierForTime(elapsed) {
-  const th = LEVELS[settings.level].th;
+  const th = getThresholds();
   const i = th.findIndex((x) => elapsed < x);
   return TIER_ORDER[i < 0 ? 4 : i];
 }
@@ -299,11 +428,20 @@ function submit() {
     game.streak++;
     game.bestStreak = Math.max(game.bestStreak, game.streak);
     if (game.fastest === null || elapsed < game.fastest) game.fastest = elapsed;
+    if (settings.level === 'dynamic') {
+      game.missStreak = 0;
+      game.diffStage = Math.min(8, game.diffStage + 1);
+      game.maxStage = Math.max(game.maxStage, game.diffStage);
+    }
     sfx.correct();
     showFeedback(true, elapsed);
   } else {
     key = 'wobble';
     game.streak = 0;
+    if (settings.level === 'dynamic') {
+      game.missStreak++;
+      game.diffStage = Math.max(1, game.diffStage - 1);
+    }
     sfx.wrong();
     showFeedback(false);
   }
@@ -347,12 +485,29 @@ function land() {
       game.score += pts;
       addText(`+${pts}` + (mult > 1 ? `  (x${mult} combo!)` : ''), VW * 0.64, 330, 40, '#ffffff');
     } else {
-      addText('Keep going! 💪', VW * 0.64, 330, 40, '#ffffff');
+      if (settings.level === 'dynamic' && game.missStreak >= 3) {
+        addText('CRASH! 💥', VW * 0.64, 330, 46, '#ff3b3b');
+        rider.wobbleT = 3;
+      } else {
+        addText('Keep going! 💪', VW * 0.64, 330, 40, '#ffffff');
+      }
     }
     game.jump++;
     updateHUD();
     hideQuiz();
-    if (game.jump >= TOTAL_JUMPS) { phase = 'finish'; finishT = 2.2; return; }
+    if (settings.level === 'dynamic') {
+      if (game.missStreak >= 3) {
+        phase = 'finish';
+        finishT = 2.2;
+        return;
+      }
+    } else {
+      if (game.jump >= TOTAL_JUMPS) {
+        phase = 'finish';
+        finishT = 2.2;
+        return;
+      }
+    }
   }
   phase = 'cruise';
   addRamp(rider.x + randInt(700, 1000));
@@ -761,7 +916,7 @@ function draw() {
 
 // ---------- UI ----------
 const ui = {
-  hud: $('hud'), score: $('hud-score'), jump: $('hud-jump'), streak: $('hud-streak'),
+  hud: $('hud'), score: $('hud-score'), jump: $('hud-jump'), streak: $('hud-streak'), lives: $('hud-lives'),
   quiz: $('quiz'), qText: $('q-text'), qAnswer: $('q-answer'), timerFill: $('timer-fill'),
   trickLabel: $('trick-label'), feedback: $('feedback'), pad: $('pad'),
   menu: $('menu'), results: $('results'),
@@ -770,9 +925,19 @@ const ui = {
 function updateHUD() {
   if (!game) return;
   ui.score.textContent = `⭐ ${game.score}`;
-  ui.jump.textContent = `Jump ${Math.min(game.jump + 1, TOTAL_JUMPS)} / ${TOTAL_JUMPS}`;
-  ui.streak.textContent = `🔥 ${game.streak} in a row!`;
-  ui.streak.classList.toggle('hidden', game.streak < 2);
+  if (settings.level === 'dynamic') {
+    ui.jump.textContent = `Jump ${game.jump + 1}`;
+    ui.lives.classList.remove('hidden');
+    const hearts = game.missStreak === 0 ? '❤️❤️❤️' : game.missStreak === 1 ? '❤️❤️🖤' : '❤️🖤🖤';
+    ui.lives.textContent = hearts;
+    ui.streak.textContent = `🔥 Streak: ${game.streak} (Lvl ${game.diffStage})`;
+    ui.streak.classList.remove('hidden');
+  } else {
+    ui.jump.textContent = `Jump ${Math.min(game.jump + 1, TOTAL_JUMPS)} / ${TOTAL_JUMPS}`;
+    ui.lives.classList.add('hidden');
+    ui.streak.textContent = `🔥 ${game.streak} in a row!`;
+    ui.streak.classList.toggle('hidden', game.streak < 2);
+  }
 }
 
 function showQuiz() {
@@ -803,18 +968,28 @@ function showFeedback(ok, elapsed) {
   if (ok) {
     ui.qAnswer.className = 'ok';
     ui.feedback.className = 'ok';
-    ui.feedback.textContent = `✅ Correct! (${elapsed.toFixed(1)} sec)`;
+    const extra = settings.level === 'dynamic' ? ` (Lvl ${game.diffStage}!)` : '';
+    ui.feedback.textContent = `✅ Correct! (${elapsed.toFixed(1)} sec)${extra}`;
   } else {
     ui.qAnswer.className = 'bad';
     ui.feedback.className = 'bad';
-    ui.feedback.textContent = `Oops! ${problem.text} = ${problem.answer}`;
+    if (settings.level === 'dynamic') {
+      const left = 3 - game.missStreak;
+      if (left > 0) {
+        ui.feedback.textContent = `Oops! ${problem.text} = ${problem.answer} (${left} heart${left === 1 ? '' : 's'} left!)`;
+      } else {
+        ui.feedback.textContent = `💥 3 misses in a row! (${problem.text} = ${problem.answer})`;
+      }
+    } else {
+      ui.feedback.textContent = `Oops! ${problem.text} = ${problem.answer}`;
+    }
   }
 }
 
 let lastLabel = '';
 function updateTimerUI() {
   const e = (performance.now() - qStart) / 1000;
-  const th = LEVELS[settings.level].th;
+  const th = getThresholds();
   const key = tierForTime(e);
   ui.timerFill.style.width = `${clamp(1 - e / th[3], 0, 1) * 100}%`;
   if (key !== lastLabel) {
@@ -864,7 +1039,7 @@ function buildMenu() {
   lv.innerHTML = '';
   for (const [key, L] of Object.entries(LEVELS)) {
     const b = document.createElement('button');
-    b.className = 'level' + (settings.level === key ? ' sel' : '');
+    b.className = 'level' + (key === 'dynamic' ? ' dynamic' : '') + (settings.level === key ? ' sel' : '');
     b.innerHTML = `<b>${L.name}</b><small>${L.desc}</small>`;
     b.onclick = () => { settings.level = key; localStorage.setItem('bmx_level', key); buildMenu(); };
     lv.appendChild(b);
@@ -878,18 +1053,33 @@ function buildMenu() {
     s.onclick = () => { settings.color = c; localStorage.setItem('bmx_color', c); buildMenu(); };
     cs.appendChild(s);
   }
-  const th = LEVELS[settings.level].th;
-  $('guide').innerHTML = TIER_ORDER.map((k, i) => {
-    const tier = TIERS[k];
-    const timeText = i < th.length ? `under ${th[i]} sec` : 'slower';
-    const list = tier.tricks.map((t) => t.name.replace(/!+$/, '')).join(', ');
-    return `<div class="guide-row" style="background:${tier.color}">
-      <div class="guide-row-head"><span>${tier.label}</span><span>${timeText}</span></div>
-      <div class="guide-row-tricks">${list}</div>
+  if (settings.level === 'dynamic') {
+    $('guide').innerHTML = `
+      <div class="guide-row" style="background:#ff6d00">
+        <div class="guide-row-head"><span>⚡ Dynamic Endless Mode</span><span>Adaptive</span></div>
+        <div class="guide-row-tricks">Starts easy (+ up to 7) & gets harder as your streak continues! Drops a level on a miss. 3 misses in a row = Wipeout!</div>
+      </div>` + TIER_ORDER.map((k) => {
+        const tier = TIERS[k];
+        const list = tier.tricks.map((t) => t.name.replace(/!+$/, '')).join(', ');
+        return `<div class="guide-row" style="background:${tier.color}">
+          <div class="guide-row-head"><span>${tier.label}</span></div>
+          <div class="guide-row-tricks">${list}</div>
+        </div>`;
+      }).join('');
+  } else {
+    const th = LEVELS[settings.level].th;
+    $('guide').innerHTML = TIER_ORDER.map((k, i) => {
+      const tier = TIERS[k];
+      const timeText = i < th.length ? `under ${th[i]} sec` : 'slower';
+      const list = tier.tricks.map((t) => t.name.replace(/!+$/, '')).join(', ');
+      return `<div class="guide-row" style="background:${tier.color}">
+        <div class="guide-row-head"><span>${tier.label}</span><span>${timeText}</span></div>
+        <div class="guide-row-tricks">${list}</div>
+      </div>`;
+    }).join('') + `<div class="guide-row" style="background:${TIERS.wobble.color}">
+      <div class="guide-row-head"><span>❌ Wrong answer</span><span>wobbly hop</span></div>
     </div>`;
-  }).join('') + `<div class="guide-row" style="background:${TIERS.wobble.color}">
-    <div class="guide-row-head"><span>❌ Wrong answer</span><span>wobbly hop</span></div>
-  </div>`;
+  }
   const best = +localStorage.getItem('bmx_best_' + settings.level) || 0;
   $('best-line').textContent = best ? `🏆 Best ${LEVELS[settings.level].name} score: ${best}` : '';
 }
@@ -920,8 +1110,17 @@ function showResults() {
   mode = 'results';
   ui.hud.classList.add('hidden');
   hideQuiz();
-  const stars = game.correct >= 9 ? 3 : game.correct >= 6 ? 2 : 1;
-  $('res-title').textContent = stars === 3 ? 'LEGENDARY RIDE! 🏆' : stars === 2 ? 'Awesome riding! 🤘' : 'Nice job! Keep practicing! 💪';
+  let stars, title;
+  if (settings.level === 'dynamic') {
+    stars = game.jump >= 20 ? 3 : game.jump >= 10 ? 2 : 1;
+    title = game.missStreak >= 3
+      ? (game.jump >= 20 ? 'HEROIC RUN! 🌟' : game.jump >= 10 ? 'AWESOME RIDE! 🤘' : 'WIPEOUT! 💥')
+      : 'INCREDIBLE! 🏆';
+  } else {
+    stars = game.correct >= 9 ? 3 : game.correct >= 6 ? 2 : 1;
+    title = stars === 3 ? 'LEGENDARY RIDE! 🏆' : stars === 2 ? 'Awesome riding! 🤘' : 'Nice job! Keep practicing! 💪';
+  }
+  $('res-title').textContent = title;
   $('res-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? '' : 'off'}">⭐</span>`).join('');
   $('res-score').textContent = `${game.score} points`;
   const key = 'bmx_best_' + settings.level;
@@ -930,11 +1129,19 @@ function showResults() {
   if (isBest) localStorage.setItem(key, game.score);
   $('res-best').classList.toggle('hidden', !isBest || game.score === 0);
   const bestTrick = game.bestTrickName ? game.bestTrickName : (game.bestTrickIdx < 99 ? TIER_LABEL[TIER_ORDER[game.bestTrickIdx]] : '—');
-  $('res-stats').innerHTML = `
-    <div>Correct<b>${game.correct} / ${TOTAL_JUMPS}</b></div>
-    <div>Best streak<b>🔥 ${game.bestStreak}</b></div>
-    <div>Fastest answer<b>${game.fastest !== null ? game.fastest.toFixed(1) + ' sec' : '—'}</b></div>
-    <div>Best trick<b style="font-size:20px">${bestTrick}</b></div>`;
+  if (settings.level === 'dynamic') {
+    $('res-stats').innerHTML = `
+      <div>Jumps survived<b>${game.jump}</b></div>
+      <div>Max streak<b>🔥 ${game.bestStreak}</b></div>
+      <div>Highest level<b>Level ${game.maxStage}</b></div>
+      <div>Best trick<b style="font-size:20px">${bestTrick}</b></div>`;
+  } else {
+    $('res-stats').innerHTML = `
+      <div>Correct<b>${game.correct} / ${TOTAL_JUMPS}</b></div>
+      <div>Best streak<b>🔥 ${game.bestStreak}</b></div>
+      <div>Fastest answer<b>${game.fastest !== null ? game.fastest.toFixed(1) + ' sec' : '—'}</b></div>
+      <div>Best trick<b style="font-size:20px">${bestTrick}</b></div>`;
+  }
   ui.results.classList.remove('hidden');
 }
 

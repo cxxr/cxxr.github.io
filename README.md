@@ -1,1 +1,1 @@
-# cxxr.github.io-games
+# cxxr.github.io

@@ -430,94 +430,118 @@ function getRandomJumpType() {
   return type;
 }
 
+function sizeRampForTrick(r, trick) {
+  if (!r || !trick) return;
+  const D = trick.speed * trick.T;
+  r.flightDist = D;
+
+  if (r.type === 'steep_kicker') {
+    r.len = 135;
+    r.h = 105;
+    r.launchX = r.x + r.len;
+    r.launchH = r.h;
+    r.landH = 75;
+    r.landLen = 140;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+    r.extraH = 40;
+  } else if (r.type === 'gap_jump') {
+    r.len = 135;
+    r.h = 82;
+    r.launchX = r.x + r.len;
+    r.launchH = r.h;
+    r.landH = 65;
+    r.landLen = 130;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.gap = r.landX - r.launchX;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+  } else if (r.type === 'whale_tail') {
+    r.len1 = 120;
+    r.h1 = 54;
+    r.len2 = 130;
+    r.h2 = 85;
+    r.launchX = r.x + r.len1 + r.len2 * 0.58;
+    r.launchH = r.h2;
+    r.h = r.h2;
+    r.landH = 65;
+    r.landLen = 130;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+  } else if (r.type === 'big_drop') {
+    r.len1 = 125;
+    r.h = 96;
+    r.len2 = 80;
+    r.launchX = r.x + r.len1 + r.len2;
+    r.launchH = r.h;
+    r.landH = 60;
+    r.landLen = 125;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+  } else if (r.type === 'tabletop') {
+    r.len1 = 130;
+    r.h = 78;
+    r.launchX = r.x + r.len1;
+    r.launchH = r.h;
+    r.landH = 70;
+    r.landLen = 125;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.tableLen = r.landX - r.launchX;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+  } else if (r.type === 'step_up') {
+    r.len = 115;
+    r.h = 54;
+    r.launchX = r.x + r.len;
+    r.launchH = r.h;
+    r.landH = 75;
+    r.landLen = 130;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.gap = r.landX - r.launchX;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+    r.extraH = 25;
+  } else {
+    r.type = 'kicker';
+    r.len = 140;
+    r.h = 80;
+    r.launchX = r.x + r.len;
+    r.launchH = r.h;
+    r.landH = 65;
+    r.landLen = 130;
+    r.landX = r.launchX + D - r.landLen * 0.35;
+    r.yLand = r.landH * 0.65;
+    r.totalLen = (r.landX + r.landLen) - r.x;
+  }
+}
+
 function addRamp(x, forcedType = null) {
   const type = forcedType || getRandomJumpType();
   const flag = COLORS[randInt(0, COLORS.length - 1)];
   const r = { x, type, flag, done: false, extraH: 0 };
-
-  if (type === 'steep_kicker') {
-    r.len = 135;
-    r.h = randInt(95, 115);
-    r.back = 50;
-    r.launchX = x + r.len;
-    r.launchH = r.h;
-    r.totalLen = r.len + r.back;
-    r.extraH = 40;
-  } else if (type === 'gap_jump') {
-    r.len = 140;
-    r.h = 82;
-    r.gap = 180;
-    r.landLen = 120;
-    r.totalLen = r.len + r.gap + r.landLen;
-    r.launchX = x + r.len;
-    r.launchH = r.h;
-  } else if (type === 'whale_tail') {
-    r.len1 = 125;
-    r.h1 = 54;
-    r.len2 = 140;
-    r.h2 = 86;
-    r.back = 60;
-    r.totalLen = r.len1 + r.len2 + r.back;
-    r.launchX = x + r.len1 + r.len2 * 0.58;
-    r.launchH = r.h2;
-    r.h = r.h2;
-  } else if (type === 'big_drop') {
-    r.len1 = 130;
-    r.h = 96;
-    r.len2 = 85;
-    r.back = 65;
-    r.totalLen = r.len1 + r.len2 + r.back;
-    r.launchX = x + r.len1 + r.len2;
-    r.launchH = r.h;
-  } else if (type === 'tabletop') {
-    r.len1 = 135;
-    r.h = 80;
-    r.len2 = 90;
-    r.back = 75;
-    r.totalLen = r.len1 + r.len2 + r.back;
-    r.launchX = x + r.len1;
-    r.launchH = r.h;
-  } else if (type === 'step_up') {
-    r.len = 115;
-    r.h = 56;
-    r.landH = 82;
-    r.landLen = 120;
-    r.gap = 110;
-    r.totalLen = r.len + r.gap + r.landLen;
-    r.launchX = x + r.len;
-    r.launchH = r.h;
-    r.extraH = 25;
-  } else {
-    r.type = 'kicker';
-    r.len = 150;
-    r.h = randInt(72, 85);
-    r.back = 55;
-    r.totalLen = r.len + r.back;
-    r.launchX = x + r.len;
-    r.launchH = r.h;
-  }
-
+  sizeRampForTrick(r, { speed: 420, T: 1.3 });
   ramps.push(r);
 }
 const currentRamp = () => ramps.find((r) => !r.done);
 
 function getRampHeightAndAngle(x, r) {
+  if (r.landX !== undefined && x >= r.landX && x <= r.landX + r.landLen) {
+    const v = (x - r.landX) / r.landLen;
+    return { y: r.landH * (1 - v), angle: Math.atan(r.landH / r.landLen) };
+  }
+
   if (r.type === 'steep_kicker') {
     const u = (x - r.x) / r.len;
     if (u >= 0 && u <= 1) {
       return { y: r.h * Math.pow(u, 2.2), angle: -Math.atan((2.2 * r.h * Math.pow(u, 1.2)) / r.len) };
     }
-    const v = (x - r.x - r.len) / r.back;
-    if (v > 0 && v <= 1) return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
   } else if (r.type === 'gap_jump') {
     const u = (x - r.x) / r.len;
     if (u >= 0 && u <= 1) {
       return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len) };
-    }
-    const landStart = r.x + r.len + r.gap;
-    const v = (x - landStart) / r.landLen;
-    if (v >= 0 && v <= 1) {
-      return { y: (r.h * 0.75) * (1 - v), angle: Math.atan((r.h * 0.75) / r.landLen) };
     }
   } else if (r.type === 'whale_tail') {
     const u1 = (x - r.x) / r.len1;
@@ -530,10 +554,6 @@ function getRampHeightAndAngle(x, r) {
       const slope = ((r.h2 - r.h1) * Math.PI * 0.85 * Math.cos(u2 * Math.PI * 0.85)) / r.len2;
       return { y, angle: -Math.atan(slope) };
     }
-    const v = (x - r.x - r.len1 - r.len2) / r.back;
-    if (v > 0 && v <= 1) {
-      return { y: r.h1 * (1 - v), angle: Math.atan(r.h1 / r.back) };
-    }
   } else if (r.type === 'big_drop') {
     const u = (x - r.x) / r.len1;
     if (u >= 0 && u <= 1) {
@@ -543,40 +563,24 @@ function getRampHeightAndAngle(x, r) {
     if (u2 > 0 && u2 <= 1) {
       return { y: r.h, angle: 0 };
     }
-    const v = (x - r.x - r.len1 - r.len2) / r.back;
-    if (v > 0 && v <= 1) {
-      return { y: r.h * 0.4 * (1 - v), angle: Math.atan((r.h * 0.4) / r.back) };
-    }
   } else if (r.type === 'tabletop') {
     const u = (x - r.x) / r.len1;
     if (u >= 0 && u <= 1) {
       return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len1) };
     }
-    const u2 = (x - r.x - r.len1) / r.len2;
-    if (u2 > 0 && u2 <= 1) {
+    if (x >= r.launchX && x < r.landX) {
       return { y: r.h, angle: 0 };
-    }
-    const v = (x - r.x - r.len1 - r.len2) / r.back;
-    if (v > 0 && v <= 1) {
-      return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
     }
   } else if (r.type === 'step_up') {
     const u = (x - r.x) / r.len;
     if (u >= 0 && u <= 1) {
       return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len) };
     }
-    const landStart = r.x + r.len + r.gap;
-    const v = (x - landStart) / r.landLen;
-    if (v >= 0 && v <= 1) {
-      return { y: r.landH * (1 - v), angle: Math.atan(r.landH / r.landLen) };
-    }
   } else {
     const u = (x - r.x) / r.len;
     if (u >= 0 && u <= 1) {
       return { y: r.h * u * u, angle: -Math.atan((2 * r.h * u) / r.len) };
     }
-    const v = (x - r.x - r.len) / r.back;
-    if (v > 0 && v <= 1) return { y: r.h * (1 - v), angle: Math.atan(r.h / r.back) };
   }
   return { y: 0, angle: 0 };
 }
@@ -658,6 +662,8 @@ function submit() {
     showFeedback(false);
   }
   rider.trick = makeTrick(key);
+  const curRamp = currentRamp();
+  if (curRamp) sizeRampForTrick(curRamp, rider.trick);
   const idx = TIER_ORDER.indexOf(key);
   if (idx >= 0 && idx < game.bestTrickIdx) { game.bestTrickIdx = idx; game.bestTrickName = rider.trick.name.replace(/!+$/, ''); }
   phase = 'go';
@@ -667,18 +673,23 @@ function submit() {
 // Demo mode (menu background): pick a random trick automatically.
 function autoTrick() {
   rider.trick = makeTrick(TIER_ORDER[randInt(0, TIER_ORDER.length - 1)]);
+  const curRamp = currentRamp();
+  if (curRamp) sizeRampForTrick(curRamp, rider.trick);
   phase = 'go';
 }
 
 function launch(r) {
   phase = 'air';
   rider.airT = 0;
+  const tr = rider.trick;
+  rider.speed = tr.speed;
   rider.launchH = r.launchH !== undefined ? r.launchH : r.h;
   rider.launchAng = rider.angle;
   rider.launchExtraH = r.extraH || 0;
+  rider.targetLandH = r.yLand !== undefined ? r.yLand : 0;
+  rider.targetLandAngle = Math.atan((r.landH || 65) / (r.landLen || 130));
   r.done = true;
   sfx.whoosh();
-  const tr = rider.trick;
   const jinfo = JUMP_INFO[r.type] || JUMP_INFO.kicker;
   addText(tr.name, VW * 0.64, 235, tr.points >= 1000 ? 56 : 48, tr.color);
   addText(`off the ${jinfo.name}!`, VW * 0.64, 285, 26, '#ffe082');
@@ -686,7 +697,9 @@ function launch(r) {
 
 function land() {
   const tr = rider.trick;
-  rider.y = 0; rider.angle = 0; rider.squash = 1; rider.blend = 0;
+  rider.y = groundHeightAt(rider.x);
+  rider.angle = groundAngleAt(rider.x);
+  rider.squash = 1; rider.blend = 0;
   Object.assign(rider, { whip: 0, spin: 0, bar: 0, crankExtra: 0, lay: 0 });
   sfx.land();
   dust(rider.x, 12 + Math.floor(tr.H / 12));
@@ -728,7 +741,9 @@ function land() {
     }
   }
   phase = 'cruise';
-  addRamp(rider.x + randInt(700, 1000));
+  const lastRamp = ramps[ramps.length - 1];
+  const nextMinX = lastRamp ? (lastRamp.landX + lastRamp.landLen + 600) : (rider.x + 700);
+  addRamp(Math.max(rider.x + 650, nextMinX + randInt(50, 250)));
 }
 
 // ---------- update ----------
@@ -776,8 +791,10 @@ function update(dt) {
     // 0→1→0: ease in, hold, ease out
     const hold = prog(0.1, 0.35) * (1 - prog(0.65, 0.9));
     const extraH = rider.launchExtraH || 0;
-    rider.y = rider.launchH * (1 - s) + 4 * (tr.H + extraH) * s * (1 - s);
-    rider.angle = rider.launchAng * (1 - Math.min(1, s * 3)) + tr.rot * TAU * prog(0.08, 0.88);
+    const baseY = rider.launchH * (1 - s) + (rider.targetLandH || 0) * s;
+    rider.y = baseY + 4 * (tr.H + extraH) * s * (1 - s);
+    const landTilt = (rider.targetLandAngle || 0.4) * prog(0.65, 1.0);
+    rider.angle = rider.launchAng * (1 - Math.min(1, s * 2.5)) + landTilt + tr.rot * TAU * prog(0.08, 0.88);
     rider.spin = tr.spin * TAU * prog(0.1, 0.85);
     rider.whip = tr.whip * TAU * prog(0.15, 0.75);
     rider.bar = tr.bar === 'xup' ? Math.PI * hold : tr.bar === 'turn' ? Math.PI * 0.55 * hold : tr.bar ? TAU * prog(0.18, 0.72) : 0;
@@ -1437,13 +1454,35 @@ function drawFlag(fx, fy, flagColor, height = 55) {
   ctx.fill();
 }
 
+function drawLandingRamp(landX, landLen, landH, cols, flagColor = '#ffffff') {
+  ctx.beginPath();
+  ctx.moveTo(landX, GROUND - landH);
+  for (let i = 0; i <= 18; i++) {
+    const v = i / 18;
+    ctx.lineTo(landX + v * landLen, GROUND - landH * (1 - v));
+  }
+  ctx.lineTo(landX, GROUND);
+  ctx.closePath();
+  const g2 = ctx.createLinearGradient(0, GROUND - landH, 0, GROUND);
+  g2.addColorStop(0, cols.c1); g2.addColorStop(1, cols.c2);
+  ctx.fillStyle = g2; ctx.fill();
+
+  ctx.strokeStyle = cols.lip; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(landX, GROUND - landH);
+  ctx.lineTo(landX + landLen, GROUND);
+  ctx.stroke();
+
+  drawFlag(landX + landLen * 0.4, GROUND - landH * 0.6, flagColor, 44);
+}
+
 function drawStandardKicker(r, x0, cols) {
   ctx.beginPath(); ctx.moveTo(x0, GROUND);
   for (let i = 0; i <= 24; i++) {
     const u = i / 24;
     ctx.lineTo(x0 + u * r.len, GROUND - r.h * u * u);
   }
-  ctx.lineTo(x0 + r.len + r.back, GROUND);
+  ctx.lineTo(x0 + r.len, GROUND);
   ctx.closePath();
   const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
   g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
@@ -1457,7 +1496,11 @@ function drawStandardKicker(r, x0, cols) {
     i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
   }
   ctx.stroke();
-  drawFlag(x0 + r.len + 14, GROUND - r.h * 0.75, r.flag, 55);
+  drawFlag(x0 + r.len, GROUND - r.h, r.flag, 55);
+  drawSign(x0 + 15, '🚀 KICKER', '#ff9800');
+
+  const landX = x0 + (r.landX - r.x);
+  drawLandingRamp(landX, r.landLen, r.landH, cols, '#ffffff');
 }
 
 function drawSteepKicker(r, x0, cols) {
@@ -1466,7 +1509,7 @@ function drawSteepKicker(r, x0, cols) {
     const u = i / 24;
     ctx.lineTo(x0 + u * r.len, GROUND - r.h * Math.pow(u, 2.2));
   }
-  ctx.lineTo(x0 + r.len + r.back, GROUND);
+  ctx.lineTo(x0 + r.len, GROUND);
   ctx.closePath();
   const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
   g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
@@ -1492,7 +1535,10 @@ function drawSteepKicker(r, x0, cols) {
   ctx.strokeStyle = cols.lip; ctx.lineWidth = 3; ctx.stroke();
 
   drawSign(x0 + 15, '⚡ STEEP', '#ffeb3b');
-  drawFlag(x0 + r.len + 14, GROUND - r.h * 0.8, r.flag, 65);
+  drawFlag(x0 + r.len, GROUND - r.h, r.flag, 65);
+
+  const landX = x0 + (r.landX - r.x);
+  drawLandingRamp(landX, r.landLen, r.landH, cols, '#ffe082');
 }
 
 function drawGapJump(r, x0, cols) {
@@ -1519,46 +1565,31 @@ function drawGapJump(r, x0, cols) {
 
   // 2. Canyon Gap Void / Hazard Pit
   const pitX = x0 + r.len;
+  const landX = x0 + (r.landX - r.x);
+  const gapW = Math.max(30, landX - pitX);
   ctx.fillStyle = '#0f172a';
-  ctx.fillRect(pitX, GROUND, r.gap, 26);
-  for (let s = 0; s < r.gap; s += 24) {
+  ctx.fillRect(pitX, GROUND, gapW, 26);
+  for (let s = 0; s < gapW; s += 24) {
     ctx.fillStyle = (s / 24) % 2 === 0 ? '#f59e0b' : '#1e293b';
-    ctx.fillRect(pitX + s, GROUND - 4, Math.min(24, r.gap - s), 6);
+    ctx.fillRect(pitX + s, GROUND - 4, Math.min(24, gapW - s), 6);
   }
   ctx.fillStyle = '#ef4444'; ctx.font = '700 13px Fredoka, sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('⚠️ GAP ⚠️', pitX + r.gap * 0.5, GROUND + 17);
+  ctx.fillText('⚠️ GAP ⚠️', pitX + gapW * 0.5, GROUND + 17);
 
   // 3. Landing ramp
-  const landX = pitX + r.gap;
-  const landH = r.h * 0.75;
-  ctx.beginPath();
-  ctx.moveTo(landX, GROUND - landH);
-  for (let i = 0; i <= 18; i++) {
-    const v = i / 18;
-    ctx.lineTo(landX + v * r.landLen, GROUND - landH * (1 - v));
-  }
-  ctx.lineTo(landX, GROUND);
-  ctx.closePath();
-  const g2 = ctx.createLinearGradient(0, GROUND - landH, 0, GROUND);
-  g2.addColorStop(0, cols.c1); g2.addColorStop(1, cols.c2);
-  ctx.fillStyle = g2; ctx.fill();
-
-  ctx.strokeStyle = cols.lip; ctx.lineWidth = 4.5;
-  ctx.beginPath(); ctx.moveTo(landX, GROUND - landH); ctx.lineTo(landX + r.landLen, GROUND); ctx.stroke();
+  drawLandingRamp(landX, r.landLen, r.landH, cols, '#ffffff');
 
   drawSign(x0 + 15, '⚠️ GAP JUMP', '#ef4444');
   drawFlag(x0 + r.len, GROUND - r.h, r.flag, 52);
-  drawFlag(landX + r.landLen, GROUND - 10, '#ffffff', 42);
 }
 
 function drawWhaleTail(r, x0, cols) {
   const deckStart = x0 + r.len1;
-  const deckEnd = deckStart + r.len2;
-  const deckCrest = deckStart + r.len2 * 0.54;
+  const launchLip = x0 + (r.launchX - r.x);
 
   // Wooden support trestles under structure
   ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 4.5; ctx.lineCap = 'square';
-  for (let px = x0 + 25; px <= deckEnd; px += 32) {
+  for (let px = x0 + 25; px <= launchLip; px += 32) {
     let topY = GROUND;
     if (px < deckStart) {
       const u = (px - x0) / r.len1;
@@ -1568,7 +1599,7 @@ function drawWhaleTail(r, x0, cols) {
       topY = GROUND - (r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85));
     }
     ctx.beginPath(); ctx.moveTo(px, GROUND); ctx.lineTo(px, topY); ctx.stroke();
-    if (px + 32 <= deckEnd) {
+    if (px + 32 <= launchLip) {
       ctx.strokeStyle = 'rgba(62,39,35,0.6)'; ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(px, GROUND); ctx.lineTo(px + 32, topY);
@@ -1584,12 +1615,12 @@ function drawWhaleTail(r, x0, cols) {
     const u = i / 16;
     ctx.lineTo(x0 + u * r.len1, GROUND - r.h1 * u * u);
   }
-  for (let i = 0; i <= 22; i++) {
-    const u = i / 22;
+  for (let i = 0; i <= 14; i++) {
+    const u = (i / 14) * 0.58;
     const y = r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85);
     ctx.lineTo(deckStart + u * r.len2, GROUND - y);
   }
-  ctx.lineTo(deckEnd + r.back, GROUND);
+  ctx.lineTo(launchLip, GROUND);
   ctx.closePath();
   const g = ctx.createLinearGradient(0, GROUND - r.h2, 0, GROUND);
   g.addColorStop(0, '#8d6e63'); g.addColorStop(1, '#4e342e');
@@ -1603,8 +1634,8 @@ function drawWhaleTail(r, x0, cols) {
     const px = x0 + u * r.len1, py = GROUND - r.h1 * u * u;
     i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
   }
-  for (let i = 0; i <= 22; i++) {
-    const u = i / 22;
+  for (let i = 0; i <= 14; i++) {
+    const u = (i / 14) * 0.58;
     const y = r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85);
     ctx.lineTo(deckStart + u * r.len2, GROUND - y);
   }
@@ -1613,8 +1644,8 @@ function drawWhaleTail(r, x0, cols) {
   // Safety handrails on deck
   ctx.strokeStyle = '#d7ccc8'; ctx.lineWidth = 2.5;
   ctx.beginPath();
-  for (let i = 0; i <= 18; i++) {
-    const u = i / 18;
+  for (let i = 0; i <= 14; i++) {
+    const u = (i / 14) * 0.58;
     const y = r.h1 + (r.h2 - r.h1) * Math.sin(u * Math.PI * 0.85) + 16;
     const px = deckStart + u * r.len2, py = GROUND - y;
     i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
@@ -1622,12 +1653,30 @@ function drawWhaleTail(r, x0, cols) {
   ctx.stroke();
 
   drawSign(x0 + 15, '🐋 WHALE TAIL', '#ffb74d');
-  drawFlag(deckCrest, GROUND - r.h2, r.flag, 52);
+  drawFlag(launchLip, GROUND - r.h2, r.flag, 52);
+
+  // Wooden slopestyle landing ramp
+  const landX = x0 + (r.landX - r.x);
+  ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 4; ctx.lineCap = 'square';
+  for (let px = landX + 20; px <= landX + r.landLen - 10; px += 28) {
+    const v = (px - landX) / r.landLen;
+    const topY = GROUND - r.landH * (1 - v);
+    ctx.beginPath(); ctx.moveTo(px, GROUND); ctx.lineTo(px, topY); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(landX, GROUND - r.landH);
+  ctx.lineTo(landX + r.landLen, GROUND);
+  ctx.lineTo(landX, GROUND); ctx.closePath();
+  const wg = ctx.createLinearGradient(0, GROUND - r.landH, 0, GROUND);
+  wg.addColorStop(0, '#8d6e63'); wg.addColorStop(1, '#4e342e');
+  ctx.fillStyle = wg; ctx.fill();
+  ctx.strokeStyle = '#bcaaa4'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(landX, GROUND - r.landH); ctx.lineTo(landX + r.landLen, GROUND); ctx.stroke();
+  drawFlag(landX + r.landLen * 0.4, GROUND - r.landH * 0.6, '#ffffff', 44);
 }
 
 function drawBigDrop(r, x0, cols) {
   const flatStart = x0 + r.len1;
-  const dropLedge = flatStart + r.len2;
+  const dropLedge = x0 + (r.launchX - r.x);
 
   // Support towers holding up the high runway
   ctx.strokeStyle = '#263238'; ctx.lineWidth = 5; ctx.lineCap = 'square';
@@ -1680,31 +1729,28 @@ function drawBigDrop(r, x0, cols) {
     ctx.fillRect(dropLedge - s - 6, GROUND - r.h - 1, 6, 6);
   }
 
-  // Landing slope below
-  const landLen = r.back || 65;
-  ctx.beginPath(); ctx.moveTo(dropLedge, GROUND - r.h * 0.4);
-  ctx.lineTo(dropLedge + landLen, GROUND);
-  ctx.lineTo(dropLedge, GROUND); ctx.closePath();
-  ctx.fillStyle = cols.c2; ctx.fill();
-
   drawSign(x0 + 15, '⬇️ BIG DROP', '#e040fb');
   drawFlag(dropLedge, GROUND - r.h, r.flag, 56);
+
+  // Landing slope below
+  const landX = x0 + (r.landX - r.x);
+  drawLandingRamp(landX, r.landLen, r.landH, cols, '#ffffff');
 }
 
 function drawTabletop(r, x0, cols) {
   const tableStart = x0 + r.len1;
-  const tableEnd = tableStart + r.len2;
-  const landEnd = tableEnd + r.back;
+  const landX = x0 + (r.landX - r.x);
+  const landEnd = landX + r.landLen;
 
   ctx.beginPath(); ctx.moveTo(x0, GROUND);
   for (let i = 0; i <= 20; i++) {
     const u = i / 20;
     ctx.lineTo(x0 + u * r.len1, GROUND - r.h * u * u);
   }
-  ctx.lineTo(tableEnd, GROUND - r.h);
+  ctx.lineTo(landX, GROUND - r.landH);
   ctx.lineTo(landEnd, GROUND);
   ctx.closePath();
-  const g = ctx.createLinearGradient(0, GROUND - r.h, 0, GROUND);
+  const g = ctx.createLinearGradient(0, GROUND - Math.max(r.h, r.landH), 0, GROUND);
   g.addColorStop(0, cols.c1); g.addColorStop(1, cols.c2);
   ctx.fillStyle = g; ctx.fill();
 
@@ -1715,12 +1761,13 @@ function drawTabletop(r, x0, cols) {
     const px = x0 + u * r.len1, py = GROUND - r.h * u * u;
     i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
   }
-  ctx.lineTo(tableEnd, GROUND - r.h);
+  ctx.lineTo(landX, GROUND - r.landH);
   ctx.lineTo(landEnd, GROUND);
   ctx.stroke();
 
   drawSign(x0 + 15, '🛹 TABLETOP', '#ab47bc');
   drawFlag(tableStart + 10, GROUND - r.h, r.flag, 50);
+  drawFlag(landX + r.landLen * 0.4, GROUND - r.landH * 0.6, '#ffffff', 44);
 }
 
 function drawStepUp(r, x0, cols) {
@@ -1746,12 +1793,12 @@ function drawStepUp(r, x0, cols) {
   ctx.stroke();
 
   // Elevated step-up landing table
-  const landStart = x0 + r.len + r.gap;
-  const landEnd = landStart + r.landLen;
+  const landX = x0 + (r.landX - r.x);
+  const landEnd = landX + r.landLen;
   ctx.beginPath();
-  ctx.moveTo(landStart, GROUND);
-  ctx.lineTo(landStart, GROUND - r.landH);
-  ctx.lineTo(landStart + r.landLen * 0.4, GROUND - r.landH);
+  ctx.moveTo(landX, GROUND);
+  ctx.lineTo(landX, GROUND - r.landH);
+  ctx.lineTo(landX + r.landLen * 0.35, GROUND - r.landH);
   ctx.lineTo(landEnd, GROUND);
   ctx.closePath();
   const g2 = ctx.createLinearGradient(0, GROUND - r.landH, 0, GROUND);
@@ -1760,14 +1807,14 @@ function drawStepUp(r, x0, cols) {
 
   ctx.strokeStyle = cols.lip; ctx.lineWidth = 4.5;
   ctx.beginPath();
-  ctx.moveTo(landStart, GROUND - r.landH);
-  ctx.lineTo(landStart + r.landLen * 0.4, GROUND - r.landH);
+  ctx.moveTo(landX, GROUND - r.landH);
+  ctx.lineTo(landX + r.landLen * 0.35, GROUND - r.landH);
   ctx.lineTo(landEnd, GROUND);
   ctx.stroke();
 
   drawSign(x0 + 15, '⬆️ STEP-UP', '#00e676');
   drawFlag(x0 + r.len, GROUND - r.h, r.flag, 48);
-  drawFlag(landStart + r.landLen * 0.4, GROUND - r.landH, '#ffffff', 48);
+  drawFlag(landX + r.landLen * 0.4, GROUND - r.landH * 0.6, '#ffffff', 48);
 }
 
 function drawRamp(r, bgKey = 'farm') {

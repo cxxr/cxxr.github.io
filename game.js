@@ -93,7 +93,7 @@ const TIERS = {
     label: '🙌 NICE TRICK', color: '#2eb84b', H: 120, T: 1.05, speed: 380, points: 250,
     tricks: [
       { name: 'WHIP!', lay: 1, pose: 'ride' },
-      { name: 'X-UP!', bar: 'xup', pose: 'ride' },
+      { name: 'X-UP!', bar: 'xup', pose: 'xup' },
     ],
   },
   easy: {
@@ -400,7 +400,7 @@ function update(dt) {
     rider.angle = rider.launchAng * (1 - Math.min(1, s * 3)) + tr.rot * TAU * prog(0.08, 0.88);
     rider.spin = tr.spin * TAU * prog(0.1, 0.85);
     rider.whip = tr.whip * TAU * prog(0.15, 0.75);
-    rider.bar = tr.bar === 'xup' ? Math.PI * hold : tr.bar ? TAU * prog(0.2, 0.75) : 0;
+    rider.bar = tr.bar === 'xup' ? Math.PI * hold : tr.bar === 'turn' ? Math.PI * 0.55 * hold : tr.bar ? TAU * prog(0.18, 0.72) : 0;
     rider.crankExtra = -tr.crank * TAU * prog(0.1, 0.8);
     rider.lay = tr.lay * 1.15 * hold;
     rider.pose = tr.pose;
@@ -580,13 +580,18 @@ const POSES = {
   superman: { hip: [-26, -72], sh: [0, -68], head: [9, -77],  hn: [12, -57], hf: [12, -57], fn: [-54, -76], ff: [-52, -66] },
   whip:     { hip: [-6, -64],  sh: [8, -82], head: [14, -94], hn: [12, -57], hf: [12, -57], fn: [-22, -46], ff: [6, -48] },
   wobble:   { hip: [-12, -56], sh: [4, -79], head: [8, -91],  hn: [24, -96], hf: [-14, -94], fn: null, ff: null },
+  release:  { hip: [-6, -52],  sh: [6, -72], head: [14, -84], hn: [5, -68],  hf: [1, -68],   fn: null, ff: null },
+  indy:     { hip: [-12, -52], sh: [4, -75], head: [12, -87], hn: [-10, -47], hf: [12, -57], fn: null, ff: null },
+  cancan:   { hip: [-4, -58],  sh: [7, -79], head: [14, -91], hn: [12, -57], hf: [12, -57], fn: [28, -50], ff: null },
+  feetoff:  { hip: [-8, -60],  sh: [8, -80], head: [15, -92], hn: [12, -57], hf: [12, -57], fn: [-1, -30], ff: [-14, -28] },
+  xup:      { hip: [-8, -54],  sh: [7, -76], head: [14, -88], hn: [16, -60], hf: [8, -55],  fn: null, ff: null },
 };
 
 const P = (a) => ({ x: a[0], y: a[1] });
 const lerpP = (a, b, t) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
 
 function getPose() {
-  const c = rider.crank, bb = { x: -3, y: -17 };
+  const c = rider.crank + (rider.crankExtra || 0), bb = { x: -3, y: -17 };
   const pn = { x: bb.x + Math.cos(c) * 8, y: bb.y + Math.sin(c) * 8 };
   const pf = { x: bb.x - Math.cos(c) * 8, y: bb.y - Math.sin(c) * 8 };
   const base = POSES.ride, tgt = POSES[rider.pose] || base, t = rider.blend;
@@ -643,9 +648,13 @@ function drawBike(color, pose) {
   drawWheel(28, -18);
   seg(17, -35, 28, -18, '#cfcfcf', 3.5);
 
-  // rear end + frame (spins during a tailwhip)
+  // rear end + frame (spins during a tailwhip or kicks out during a whip)
   ctx.save();
-  if (rider.whip) { ctx.translate(17, 0); ctx.scale(Math.cos(rider.whip), 1); ctx.translate(-17, 0); }
+  if (rider.whip) {
+    ctx.translate(17, 0); ctx.scale(Math.cos(rider.whip), 1); ctx.translate(-17, 0);
+  } else if (rider.lay) {
+    ctx.translate(17, 0); ctx.scale(Math.cos(rider.lay * 0.9), 1); ctx.translate(-17, 0);
+  }
   drawWheel(-28, -18);
   ctx.strokeStyle = color; ctx.lineWidth = 4.5;
   ctx.beginPath();
@@ -658,13 +667,20 @@ function drawBike(color, pose) {
   seg(pose.pn.x - 3, pose.pn.y, pose.pn.x + 3, pose.pn.y, '#222', 3);
   ctx.restore();
 
-  // bars + number plate
+  // bars + number plate (rotates/spins during bar spin, bar turn, x-up)
   seg(15, -44, 12, -57, '#333', 3.5);
+  ctx.save();
+  if (rider.bar) {
+    ctx.translate(12, -57);
+    ctx.scale(Math.cos(rider.bar), 1);
+    ctx.translate(-12, 57);
+  }
   seg(8, -57, 17, -59, '#333', 4);
   ctx.fillStyle = '#fff'; ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect ? ctx.roundRect(16, -56, 11, 10, 2) : ctx.rect(16, -56, 11, 10); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#222'; ctx.font = '700 8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('7', 21.5, -50.5);
+  ctx.restore();
 }
 
 function drawRider() {
@@ -686,7 +702,16 @@ function drawRider() {
   ctx.save();
   ctx.translate(sx, sy);
   ctx.scale(BIKE_SCALE, BIKE_SCALE * (1 - 0.1 * rider.squash));
-  ctx.translate(0, -32); ctx.rotate(ang); ctx.translate(0, 32);
+  ctx.translate(0, -32);
+  ctx.rotate(ang);
+  if (rider.spin) {
+    const c = Math.cos(rider.spin);
+    ctx.scale(c < 0 ? Math.min(-0.2, c) : Math.max(0.2, c), 1);
+  }
+  if (rider.lay) {
+    ctx.rotate(-rider.lay * 0.35);
+  }
+  ctx.translate(0, 32);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
   // far side limbs
@@ -854,15 +879,17 @@ function buildMenu() {
     cs.appendChild(s);
   }
   const th = LEVELS[settings.level].th;
-  const rows = [
-    ['tailwhip', `under ${th[0]} sec`],
-    ['backflip', `under ${th[1]} sec`],
-    ['superman', `under ${th[2]} sec`],
-    ['nohander', `under ${th[3]} sec`],
-    ['bunny', 'slower'],
-  ];
-  $('guide').innerHTML = rows.map(([k, t]) => `<div style="background:${TIER_COLOR[k]}"><span>${TIER_LABEL[k]}</span><span>${t}</span></div>`).join('')
-    + `<div style="background:${TIER_COLOR.wobble}"><span>❌ Wrong answer</span><span>wobbly hop</span></div>`;
+  $('guide').innerHTML = TIER_ORDER.map((k, i) => {
+    const tier = TIERS[k];
+    const timeText = i < th.length ? `under ${th[i]} sec` : 'slower';
+    const list = tier.tricks.map((t) => t.name.replace(/!+$/, '')).join(', ');
+    return `<div class="guide-row" style="background:${tier.color}">
+      <div class="guide-row-head"><span>${tier.label}</span><span>${timeText}</span></div>
+      <div class="guide-row-tricks">${list}</div>
+    </div>`;
+  }).join('') + `<div class="guide-row" style="background:${TIERS.wobble.color}">
+    <div class="guide-row-head"><span>❌ Wrong answer</span><span>wobbly hop</span></div>
+  </div>`;
   const best = +localStorage.getItem('bmx_best_' + settings.level) || 0;
   $('best-line').textContent = best ? `🏆 Best ${LEVELS[settings.level].name} score: ${best}` : '';
 }
@@ -902,7 +929,7 @@ function showResults() {
   const isBest = game.score > prev;
   if (isBest) localStorage.setItem(key, game.score);
   $('res-best').classList.toggle('hidden', !isBest || game.score === 0);
-  const bestTrick = game.bestTrickIdx < 99 ? TIER_LABEL[TIER_ORDER[game.bestTrickIdx]] : '—';
+  const bestTrick = game.bestTrickName ? game.bestTrickName : (game.bestTrickIdx < 99 ? TIER_LABEL[TIER_ORDER[game.bestTrickIdx]] : '—');
   $('res-stats').innerHTML = `
     <div>Correct<b>${game.correct} / ${TOTAL_JUMPS}</b></div>
     <div>Best streak<b>🔥 ${game.bestStreak}</b></div>

@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
   keyboard: true,   // show the on-screen keyboard
   hands: true,      // show the finger guide hands
   unlockAll: false,
+  keyboardMode: 'auto', // 'auto' | 'soft' | 'hardware'
 };
 
 function memoryBackend() {

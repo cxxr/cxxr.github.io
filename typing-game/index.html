@@ -87,14 +87,30 @@
         <div class="hud-title" id="hud-title"></div>
         <div class="progress"><div class="progress-fill" id="hud-progress"></div></div>
         <div class="pill" id="hud-stat"></div>
+        <button class="btn small icon hud-kb-mode" id="btn-kb-mode" title="Keyboard Mode (Tap to switch)" aria-label="Keyboard Mode">⌨️</button>
       </header>
       <div class="stage" id="stage"></div>
       <div class="finger-hint" id="finger-hint"></div>
+      <div class="mobile-focus-hint" id="mobile-focus-hint" style="display:none;">Tap to type ⌨️</div>
       <div class="kb-area" id="kb-area">
         <div class="hand left" id="hand-left"></div>
         <div class="keyboard" id="keyboard"></div>
         <div class="hand right" id="hand-right"></div>
       </div>
+      <!-- Hidden mobile soft keyboard input proxy -->
+      <input
+        id="mobile-text-proxy"
+        class="mobile-keyboard-proxy"
+        type="text"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        spellcheck="false"
+        enterkeyhint="go"
+        inputmode="text"
+        tabindex="-1"
+        aria-label="Type here using your device keyboard"
+      >
     </section>
 
     <!-- Results -->

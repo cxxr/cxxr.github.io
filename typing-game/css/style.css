@@ -750,6 +750,102 @@ kbd {
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
+/* ---------- Mobile Keyboard Proxy & Soft Keyboard Active ---------- */
+.mobile-keyboard-proxy {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  opacity: 0.001;
+  font-size: 16px; /* Crucial: Prevents iOS Safari automatic viewport zooming on focus */
+  pointer-events: none;
+  z-index: 1;
+  caret-color: transparent;
+}
+
+.hud-kb-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.hud-kb-mode:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+.hud-kb-mode.active-soft {
+  background: #e8f5e9;
+  border-color: #7bd389;
+  color: #2b7a36;
+}
+@media (max-width: 640px) {
+  .hud-kb-mode .kb-mode-lbl {
+    display: none;
+  }
+  .hud-kb-mode {
+    padding: 6px 8px;
+  }
+}
+
+.mobile-focus-hint {
+  z-index: 25;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(43, 58, 74, 0.85);
+  backdrop-filter: blur(4px);
+  padding: 5px 14px;
+  border-radius: 999px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: pulse-soft-hint 1.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes pulse-soft-hint {
+  from { opacity: 0.8; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(-3px); }
+}
+
+/* When device built-in soft keyboard mode is active */
+#screen-game.mobile-soft-kb-active .kb-area .keyboard {
+  display: none !important;
+}
+
+#screen-game.mobile-soft-kb-active .kb-area .hand {
+  display: none !important;
+}
+
+#screen-game.mobile-soft-kb-active .kb-area {
+  padding: 0 12px 6px;
+  min-height: 0;
+  gap: 0;
+}
+
+#screen-game.mobile-soft-kb-active .stage {
+  flex: 1;
+  min-height: 160px;
+}
+
 /* ==========================================================================
    Game Modes: Hatch, Trail, Meteor, Race
    ========================================================================== */

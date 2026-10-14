@@ -9,6 +9,7 @@ import { renderScene, renderStaticScenes } from './scene.js';
 import { KeyboardView } from './keyboard-view.js';
 import { HatchMode, TrailMode, MeteorMode, RaceMode } from './game-modes.js';
 import { WorldMap } from './world-map.js';
+import { KeyboardManager } from './keyboard-manager.js';
 import { unlockAudio, configureAudio, startMusic, sfx, say } from './audio.js';
 import { fx } from './fx.js';
 
@@ -20,6 +21,7 @@ class App {
 
     this.initDOM();
     this.initKeyboard();
+    this.initKeyboardManager();
     this.initEvents();
     this.setupInitialScreen();
   }
@@ -57,6 +59,31 @@ class App {
     });
   }
 
+  initKeyboardManager() {
+    this.kbManager = new KeyboardManager({
+      proxyInput: document.getElementById('mobile-text-proxy'),
+      gameScreen: this.screens.game,
+      toggleBtn: document.getElementById('btn-kb-mode'),
+      focusHintEl: document.getElementById('mobile-focus-hint'),
+      initialPreference: this.store.current?.settings?.keyboardMode || 'auto',
+      onKey: (ch) => {
+        if (this.activeMode) {
+          this.activeMode.handleKey(ch);
+        }
+      },
+      onModeChange: (mode, { autoDetected } = {}) => {
+        if (autoDetected) {
+          this.toast('💻 Hardware keyboard detected');
+        } else {
+          this.toast(mode === 'soft' ? '📱 Using Built-in Keyboard' : '💻 Using Hardware Keyboard');
+        }
+        if (this.store.current) {
+          this.store.updateSettings({ keyboardMode: this.kbManager.preference });
+        }
+      },
+    });
+  }
+
   initEvents() {
     // Global user interaction listener to unlock Web Audio on iOS / iPadOS Safari
     const unlockOnGesture = () => {
@@ -69,23 +96,11 @@ class App {
     window.addEventListener('touchend', unlockOnGesture, { passive: true });
     window.addEventListener('click', unlockOnGesture, { passive: true });
 
-    // Physical keyboard input
+    // Title screen start via space or enter
     window.addEventListener('keydown', (e) => {
-      // Space or Enter on title screen starts game
       if (this.currentScreen === 'title' && (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space' || e.key === 'Enter')) {
         e.preventDefault();
         this.handleStartPlay();
-        return;
-      }
-
-      if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-      if (this.activeMode) {
-        if (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space' || e.key === 'Backspace' || e.key.length === 1) {
-          e.preventDefault();
-        }
-        const k = (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space') ? ' ' : e.key;
-        this.activeMode.handleKey(k);
       }
     });
 
@@ -142,6 +157,9 @@ class App {
 
   showScreen(name) {
     this.currentScreen = name;
+    if (this.kbManager) {
+      this.kbManager.setGameActive(name === 'game');
+    }
     if (this.activeMode && name !== 'game') {
       this.activeMode.destroy();
       this.activeMode = null;
@@ -192,6 +210,9 @@ class App {
     configureAudio(p.settings);
     if (p.settings.music) startMusic();
     this.kbView.setVisible(p.settings.keyboard, p.settings.hands);
+    if (this.kbManager && p.settings.keyboardMode) {
+      this.kbManager.setPreference(p.settings.keyboardMode);
+    }
   }
 
   /* ==========================================================================
@@ -388,6 +409,9 @@ class App {
     }
 
     this.activeMode.start();
+    if (this.kbManager) {
+      this.kbManager.setGameActive(true);
+    }
   }
 
   startPractice() {
@@ -653,6 +677,14 @@ class App {
           <label class="switch"><input type="checkbox" id="set-hands" ${p.settings.hands ? 'checked' : ''}><span class="slider"></span></label>
         </div>
         <div class="settings-row">
+          <span>Keyboard Input Mode</span>
+          <select id="set-kb-mode" style="font-family:inherit; font-size:1rem; padding:4px 8px; border-radius:8px; border:2px solid #ccc; background:#fff; color:var(--ink);">
+            <option value="auto" ${p.settings.keyboardMode === 'auto' ? 'selected' : ''}>Auto (Smart Detect)</option>
+            <option value="soft" ${p.settings.keyboardMode === 'soft' ? 'selected' : ''}>Built-in Device Keyboard</option>
+            <option value="hardware" ${p.settings.keyboardMode === 'hardware' ? 'selected' : ''}>Hardware Keyboard</option>
+          </select>
+        </div>
+        <div class="settings-row">
           <span>Unlock All Levels (Skip Ahead)</span>
           <label class="switch"><input type="checkbox" id="set-unlock" ${p.settings.unlockAll ? 'checked' : ''}><span class="slider"></span></label>
         </div>
@@ -677,6 +709,13 @@ class App {
     bindToggle('set-kb', 'keyboard');
     bindToggle('set-hands', 'hands');
     bindToggle('set-unlock', 'unlockAll');
+
+    panel.querySelector('#set-kb-mode')?.addEventListener('change', (e) => {
+      this.store.updateSettings({ keyboardMode: e.target.value });
+      if (this.kbManager) {
+        this.kbManager.setPreference(e.target.value);
+      }
+    });
 
     // Reset button
     panel.querySelector('#btn-reset').addEventListener('click', () => {

@@ -23,6 +23,7 @@ const files = [
   'audio.js',
   'fx.js',
   'keyboard-view.js',
+  'keyboard-manager.js',
   'game-modes.js',
   'world-map.js',
   'main.js',

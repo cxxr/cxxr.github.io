@@ -1,7 +1,7 @@
 // Service Worker for Dino Keys PWA
 // Provides 100% offline capability, instant app shell caching, and background update checks.
 
-const CACHE_NAME = 'dino-keys-v1.1.0';
+const CACHE_NAME = 'dino-keys-v1.2.0';
 
 const PRECACHE_ASSETS = [
   './',

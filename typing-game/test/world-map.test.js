@@ -91,3 +91,39 @@ test('generateMapSVG outputs complete SVG structure with landmarks and trail', (
   assert.ok(svg.includes('map-footsteps'), 'Contains animated footsteps');
   assert.ok(svg.includes('map-unlocked-trail'), 'Contains unlocked adventure trail');
 });
+
+test('BACKGROUND_DINOS defines 12 friendly playing dinos with valid clearances', async () => {
+  const { BACKGROUND_DINOS, renderBgDinoProp } = await import('../js/world-map.js');
+  const { computeMapCoordinates } = await import('../js/world-map.js');
+  const levelPts = computeMapCoordinates(WORLDS);
+
+  assert.equal(BACKGROUND_DINOS.length, 12, 'Should define 12 background playing dinos');
+
+  BACKGROUND_DINOS.forEach((d) => {
+    assert.ok(d.id, 'Dino missing id');
+    assert.ok(d.dinoId, 'Dino missing dinoId');
+    assert.ok(d.name, 'Dino missing name');
+    assert.ok(d.biome, 'Dino missing biome');
+    assert.ok(d.action, 'Dino missing action');
+    assert.ok(d.speech, 'Dino missing speech quote');
+    assert.ok(d.x >= 60 && d.x <= 700, `Dino ${d.id} x=${d.x} out of canvas bounds`);
+    assert.ok(d.y >= 50 && d.y <= 5350, `Dino ${d.id} y=${d.y} out of canvas bounds`);
+
+    if (d.prop) {
+      const propSvg = renderBgDinoProp(d.prop);
+      assert.ok(propSvg.length > 0, `Prop ${d.prop} rendered empty string`);
+    }
+  });
+
+  // Verify that all 12 dinos have at least 70px clearance from every level node
+  BACKGROUND_DINOS.forEach((d) => {
+    levelPts.forEach((pt) => {
+      const dist = Math.hypot(d.x - pt.x, d.y - pt.y);
+      assert.ok(
+        dist >= 70,
+        `Dino ${d.id} is too close to level ${pt.id} (${dist.toFixed(1)}px < 70px)`
+      );
+    });
+  });
+});
+

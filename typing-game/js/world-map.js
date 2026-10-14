@@ -5,7 +5,7 @@
 
 import { WORLDS, LEVELS, getLevel, getWorld, currentLevel, isUnlocked } from './curriculum.js';
 import { getDino, SPECIES_NAMES } from './dinos.js';
-import { dinoSVG, shade } from './dino-art.js';
+import { dinoSVG, shade, playBallSVG, butterflySVG } from './dino-art.js';
 import { sfx, say } from './audio.js';
 import { totalStars } from './storage.js';
 
@@ -133,6 +133,256 @@ export const BIOMES = [
     bgGradient: ['#f3f0ff', '#d0bfff', '#9775fa'],
   },
 ];
+
+/**
+ * Catalogue of friendly animated dinosaurs playing across each biome in the background.
+ */
+export const BACKGROUND_DINOS = [
+  {
+    id: 'bg-trixie',
+    dinoId: 'trixie',
+    name: 'Trixie',
+    biome: 'nest',
+    x: 630,
+    y: 5120,
+    action: 'play-ball',
+    facing: 'left',
+    speech: "Catch the ball! You're doing great on the home row!",
+    prop: 'ball',
+  },
+  {
+    id: 'bg-steggy',
+    dinoId: 'steggy',
+    name: 'Steggy',
+    biome: 'nest',
+    x: 100,
+    y: 4940,
+    action: 'peek-fern',
+    facing: 'right',
+    speech: "Peek-a-boo! Hatch all the baby dino eggs!",
+    prop: 'fern',
+  },
+  {
+    id: 'bg-bronty',
+    dinoId: 'bronty',
+    name: 'Bronty',
+    biome: 'meadow',
+    x: 650,
+    y: 4320,
+    action: 'munch-leaves',
+    facing: 'left',
+    speech: "Munch munch! Prehistoric leaves are yummy!",
+    prop: 'leaves',
+  },
+  {
+    id: 'bg-clover',
+    dinoId: 'clover',
+    name: 'Clover',
+    biome: 'meadow',
+    x: 120,
+    y: 4000,
+    action: 'chase-butterfly',
+    facing: 'right',
+    speech: "Flutter flutter! I almost caught the yellow butterfly!",
+    prop: 'butterfly',
+  },
+  {
+    id: 'bg-mango',
+    dinoId: 'mango',
+    name: 'Mango',
+    biome: 'jungle',
+    x: 640,
+    y: 3480,
+    action: 'juggle-coconuts',
+    facing: 'left',
+    speech: "Ta-da! Jungle tricks! Keep that typing rhythm!",
+    prop: 'coconuts',
+  },
+  {
+    id: 'bg-anky',
+    dinoId: 'anky',
+    name: 'Anky',
+    biome: 'jungle',
+    x: 110,
+    y: 2960,
+    action: 'log-drum',
+    facing: 'right',
+    speech: "Tap-tap-TAP! Play the jungle beat with all your fingers!",
+    prop: 'log',
+  },
+  {
+    id: 'bg-ember',
+    dinoId: 'ember',
+    name: 'Ember',
+    biome: 'volcano',
+    x: 130,
+    y: 2260,
+    action: 'roast-marshmallow',
+    facing: 'right',
+    speech: "Warm and gooey toasted marshmallow! Watch out for lava!",
+    prop: 'marshmallow',
+  },
+  {
+    id: 'bg-dusty',
+    dinoId: 'dusty',
+    name: 'Dusty',
+    biome: 'canyon',
+    x: 640,
+    y: 1380,
+    action: 'canyon-slide',
+    facing: 'left',
+    speech: "Wheeeee! Sliding down the sandstone dunes is so fun!",
+    prop: 'dust',
+  },
+  {
+    id: 'bg-sunny',
+    dinoId: 'sunny',
+    name: 'Sunny',
+    biome: 'canyon',
+    x: 130,
+    y: 1160,
+    action: 'arch-peek',
+    facing: 'right',
+    speech: "Echooooo! You're climbing so high, keep going!",
+    prop: 'arch',
+  },
+  {
+    id: 'bg-frosty',
+    dinoId: 'frosty',
+    name: 'Frosty',
+    biome: 'mountain',
+    x: 620,
+    y: 840,
+    action: 'ice-skate',
+    facing: 'left',
+    speech: "Triple axel! Cold ice, warm heart! Numbers are easy!",
+    prop: 'pond',
+  },
+  {
+    id: 'bg-zephyr',
+    dinoId: 'zephyr',
+    name: 'Zephyr',
+    biome: 'sky',
+    x: 640,
+    y: 420,
+    action: 'sky-fly',
+    facing: 'left',
+    speech: "Soar with the wind! Full speed touch typing champion!",
+    prop: 'wind',
+  },
+  {
+    id: 'bg-petra',
+    dinoId: 'petra',
+    name: 'Petra',
+    biome: 'sky',
+    x: 130,
+    y: 180,
+    action: 'cloud-surf',
+    facing: 'right',
+    speech: "Surfing the clouds! You are almost at the summit star!",
+    prop: 'cloud',
+  },
+];
+
+export function renderBgDinoProp(prop) {
+  switch (prop) {
+    case 'ball':
+      return `<div class="bg-prop prop-ball">${playBallSVG()}</div>`;
+    case 'butterfly':
+      return `<div class="bg-prop prop-butterfly">${butterflySVG()}</div>`;
+    case 'marshmallow':
+      return `
+        <div class="bg-prop prop-marshmallow">
+          <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <line x1="6" y1="38" x2="36" y2="8" stroke="#8d5b2d" stroke-width="3.5" stroke-linecap="round"/>
+            <ellipse cx="30" cy="14" rx="8" ry="6" fill="#fff" stroke="#f59f00" stroke-width="1.8"/>
+            <ellipse cx="32" cy="13" rx="4" ry="3" fill="#b45309" opacity=".5"/>
+          </svg>
+        </div>`;
+    case 'coconuts':
+      return `
+        <div class="bg-prop prop-coconuts">
+          <svg viewBox="0 0 44 26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="14" cy="14" r="10" fill="#78350f" stroke="#451a03" stroke-width="2"/>
+            <circle cx="12" cy="10" r="1.5" fill="#451a03"/>
+            <circle cx="15" cy="10" r="1.5" fill="#451a03"/>
+            <circle cx="30" cy="13" r="9" fill="#92400e" stroke="#451a03" stroke-width="2"/>
+            <circle cx="28" cy="9" r="1.5" fill="#451a03"/>
+          </svg>
+        </div>`;
+    case 'leaves':
+      return `
+        <div class="bg-prop prop-leaves">
+          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 36 Q 20 20 36 6 Q 16 10 4 36" fill="#2b8a3e" stroke="#087f5b" stroke-width="1.5"/>
+            <path d="M12 28 Q 28 16 38 18" stroke="#51cf66" stroke-width="2" fill="none"/>
+          </svg>
+        </div>`;
+    case 'log':
+      return `
+        <div class="bg-prop prop-log">
+          <svg viewBox="0 0 54 26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="4" y="6" width="46" height="16" rx="6" fill="#78350f" stroke="#451a03" stroke-width="2"/>
+            <ellipse cx="8" cy="14" rx="3" ry="6" fill="#92400e"/>
+            <path d="M16 10 L 40 10 M 20 18 L 44 18" stroke="#451a03" stroke-width="2" stroke-linecap="round"/>
+            <path d="M22 6 Q 26 2 32 6" fill="#2b8a3e"/>
+          </svg>
+        </div>`;
+    case 'pond':
+      return `
+        <div class="bg-prop prop-pond">
+          <svg viewBox="0 0 90 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="45" cy="16" rx="42" ry="14" fill="#a5d8ff" stroke="#339af0" stroke-width="2.5" opacity=".75"/>
+            <ellipse cx="45" cy="16" rx="34" ry="10" fill="#d0ebff" opacity=".8"/>
+            <path d="M25 14 Q 38 10 52 14 M 40 20 Q 55 16 68 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>`;
+    case 'cloud':
+      return `
+        <div class="bg-prop prop-cloud">
+          <svg viewBox="0 0 84 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="42" cy="18" rx="38" ry="12" fill="#fff" stroke="#d0bfff" stroke-width="2"/>
+            <circle cx="28" cy="12" r="12" fill="#fff"/>
+            <circle cx="52" cy="10" r="14" fill="#fff"/>
+          </svg>
+        </div>`;
+    case 'fern':
+      return `
+        <div class="bg-prop prop-fern">
+          <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 40 Q 20 20 38 4 Q 18 16 4 40" fill="#2b8a3e"/>
+            <path d="M10 40 Q 30 24 40 12 Q 24 24 10 40" fill="#51cf66"/>
+            <path d="M16 40 Q 34 30 42 22 Q 28 30 16 40" fill="#20c997"/>
+          </svg>
+        </div>`;
+    case 'dust':
+      return `
+        <div class="bg-prop prop-dust">
+          <svg viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="16" cy="18" rx="10" ry="7" fill="#ffd8a8" opacity=".7"/>
+            <ellipse cx="28" cy="16" rx="12" ry="8" fill="#ffd8a8" opacity=".6"/>
+            <ellipse cx="40" cy="20" rx="8" ry="6" fill="#ffd8a8" opacity=".5"/>
+          </svg>
+        </div>`;
+    case 'arch':
+      return `
+        <div class="bg-prop prop-arch">
+          <svg viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 44 L 10 16 Q 23 4 36 16 L 40 44 Q 28 20 23 20 Q 18 20 6 44 Z" fill="#e8590c" stroke="#d9480f" stroke-width="2"/>
+          </svg>
+        </div>`;
+    case 'wind':
+      return `
+        <div class="bg-prop prop-wind">
+          <svg viewBox="0 0 54 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 14 Q 24 8 40 12 A 6 6 0 1 0 44 6" fill="none" stroke="#d0bfff" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M12 22 Q 28 18 42 20 A 4 4 0 1 0 44 16" fill="none" stroke="#e5dbff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>`;
+    default:
+      return '';
+  }
+}
 
 /**
  * Computes deterministic (x, y) coordinates for all levels across all worlds.
@@ -639,7 +889,71 @@ export class WorldMap {
     });
     canvasWrap.appendChild(bannersLayer);
 
-    // 2c. Interactive Stepping Stone Nodes Layer
+    // 2c. Background Playing Dinosaurs Layer
+    const bgDinosLayer = document.createElement('div');
+    bgDinosLayer.className = 'map-bg-dinos-layer';
+    bgDinosLayer.setAttribute('aria-label', 'Friendly dinosaurs playing in the biomes');
+
+    BACKGROUND_DINOS.forEach((d) => {
+      const dinoEl = document.createElement('div');
+      dinoEl.className = `map-bg-dino dino-${d.id} action-${d.action}`;
+      dinoEl.dataset.bgDinoId = d.id;
+      dinoEl.setAttribute('role', 'button');
+      dinoEl.setAttribute('tabindex', '0');
+      dinoEl.setAttribute('aria-label', `${d.name} playing in ${d.biome}: ${d.speech}`);
+
+      const leftPct = (d.x / MAP_WIDTH) * 100;
+      const topPct = (d.y / MAP_HEIGHT) * 100;
+      dinoEl.style.left = `${leftPct}%`;
+      dinoEl.style.top = `${topPct}%`;
+
+      const propHtml = renderBgDinoProp(d.prop);
+      const dinoArtHtml = dinoSVG(d.dinoId);
+
+      dinoEl.innerHTML = `
+        <div class="bg-dino-speech" id="speech-${d.id}">
+          <span class="speech-text">${d.speech}</span>
+        </div>
+        <div class="bg-dino-body ${d.facing}">
+          ${dinoArtHtml}
+          ${propHtml}
+        </div>
+        <div class="bg-dino-name">
+          <span>${d.name}</span>
+        </div>
+      `;
+
+      const triggerInteraction = (e) => {
+        e.stopPropagation();
+        sfx.correct();
+        dinoEl.classList.remove('active-celebrate');
+        void dinoEl.offsetWidth;
+        dinoEl.classList.add('active-celebrate');
+
+        const speechEl = dinoEl.querySelector('.bg-dino-speech');
+        if (speechEl) {
+          speechEl.classList.add('visible');
+          clearTimeout(dinoEl._speechTimer);
+          dinoEl._speechTimer = setTimeout(() => {
+            speechEl.classList.remove('visible');
+          }, 3400);
+        }
+        say(`${d.name} says: ${d.speech}`);
+      };
+
+      dinoEl.addEventListener('click', triggerInteraction);
+      dinoEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          triggerInteraction(e);
+        }
+      });
+
+      bgDinosLayer.appendChild(dinoEl);
+    });
+    canvasWrap.appendChild(bgDinosLayer);
+
+    // 2d. Interactive Stepping Stone Nodes Layer
     const nodesLayer = document.createElement('div');
     nodesLayer.className = 'map-nodes-layer';
 

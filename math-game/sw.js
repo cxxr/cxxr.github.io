@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bmx-math-jam-v7';
+const CACHE_NAME = 'bmx-math-jam-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',

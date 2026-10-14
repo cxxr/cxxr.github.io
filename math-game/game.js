@@ -123,8 +123,8 @@ const STREAK_TIERS = {
     speed: 480, H: 225, T: 1.65, points: 2000,
     tricks: [
       { name: 'SUPERMAN SEAT GRAB! 🦸', pose: 'seatgrab', lay: 0.4 },
-      { name: '720 TWISTER! 🌪️', spin: 2, rot: -0.5, pose: 'tuck' },
-      { name: 'CLIFFHANGER! 🧗', bar: 'turn', pose: 'cliffhanger', rot: -0.5 },
+      { name: '720 TWISTER! 🌪️', spin: 2, lay: 0.5, pose: 'tuck' },
+      { name: 'CLIFFHANGER! 🧗', bar: 'turn', pose: 'cliffhanger' },
     ],
   },
   streak5: {
@@ -1259,9 +1259,12 @@ function update(dt) {
     const baseY = rider.launchH * (1 - s) + (rider.targetLandH || 0) * s;
     rider.y = baseY + 4 * (tr.H + extraH) * s * (1 - s);
     const landTilt = (rider.targetLandAngle || 0.4) * prog(0.65, 1.0);
-    rider.angle = rider.launchAng * (1 - Math.min(1, s * 2.5)) + landTilt + tr.rot * TAU * prog(0.08, 0.88);
-    rider.spin = tr.spin * TAU * prog(0.1, 0.85);
-    rider.whip = tr.whip * TAU * prog(0.15, 0.75);
+    const flipRot = Math.round(tr.rot || 0);
+    const flipSpin = Math.round(tr.spin || 0);
+    const flipWhip = Math.round(tr.whip || 0);
+    rider.angle = rider.launchAng * (1 - Math.min(1, s * 2.5)) + landTilt + flipRot * TAU * prog(0.08, 0.88);
+    rider.spin = flipSpin * TAU * prog(0.1, 0.85);
+    rider.whip = flipWhip * TAU * prog(0.15, 0.75);
     rider.bar = tr.bar === 'xup' ? Math.PI * hold : tr.bar === 'turn' ? Math.PI * 0.55 * hold : tr.bar ? TAU * prog(0.18, 0.72) : 0;
     rider.crankExtra = -tr.crank * TAU * prog(0.1, 0.8);
     rider.lay = tr.lay * 1.15 * hold;

@@ -54,16 +54,20 @@ export const fx = {
       const horizontalDrift = (Math.random() - 0.5) * 200;
       const spin = (Math.random() - 0.5) * 720;
 
-      el.animate(
-        [
-          { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
-          { transform: `translate(${horizontalDrift}px, ${window.innerHeight + 40}px) rotate(${spin}deg)`, opacity: 0.9 },
-        ],
-        {
-          duration: duration * 1000,
-          easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        }
-      ).onfinish = () => el.remove();
+      if (el.animate) {
+        el.animate(
+          [
+            { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+            { transform: `translate(${horizontalDrift}px, ${window.innerHeight + 40}px) rotate(${spin}deg)`, opacity: 0.9 },
+          ],
+          {
+            duration: duration * 1000,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          }
+        ).onfinish = () => el.remove();
+      } else {
+        setTimeout(() => el.remove(), 1000);
+      }
 
       parent.appendChild(el);
     }
@@ -85,13 +89,17 @@ export const fx = {
     el.style.pointerEvents = 'none';
     el.style.zIndex = '30';
 
-    el.animate(
-      [
-        { transform: 'scale(0.4)', opacity: 0.8 },
-        { transform: 'scale(2.2)', opacity: 0 },
-      ],
-      { duration: 450, easing: 'ease-out' }
-    ).onfinish = () => el.remove();
+    if (el.animate) {
+      el.animate(
+        [
+          { transform: 'scale(0.4)', opacity: 0.8 },
+          { transform: 'scale(2.2)', opacity: 0 },
+        ],
+        { duration: 450, easing: 'ease-out' }
+      ).onfinish = () => el.remove();
+    } else {
+      setTimeout(() => el.remove(), 450);
+    }
 
     parent.appendChild(el);
   },
@@ -100,7 +108,7 @@ export const fx = {
    * Gentle screen nudge on wrong key.
    */
   shake(el = document.getElementById('stage')) {
-    if (!el) return;
+    if (!el || !el.animate) return;
     el.animate(
       [
         { transform: 'translateX(0)' },

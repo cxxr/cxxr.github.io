@@ -161,3 +161,35 @@ export function meteorSVG() {
     <circle cx="44" cy="96" r="9" fill="#6d4c41"/><circle cx="78" cy="124" r="7" fill="#6d4c41"/><circle cx="80" cy="94" r="5" fill="#6d4c41"/>
   </svg>`;
 }
+
+/** A cute prehistoric patterned ball the dinos bounce and play with while running. */
+export function playBallSVG() {
+  return `<svg class="play-ball-art" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="32" cy="58" rx="22" ry="5" fill="#000" opacity=".18"/>
+    <circle cx="32" cy="30" r="26" fill="#ff6b6b" stroke="#2b3a4a" stroke-width="3"/>
+    <path d="M12 18 Q 32 30 18 50" stroke="#ffd43b" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M52 18 Q 32 30 46 50" stroke="#4dabf7" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <circle cx="32" cy="30" r="9" fill="#fff" stroke="#2b3a4a" stroke-width="2.5"/>
+    <ellipse cx="23" cy="18" rx="6" ry="3.5" fill="#fff" opacity=".6" transform="rotate(-30 23 18)"/>
+  </svg>`;
+}
+
+/** A friendly golden prehistoric dragonfly/butterfly fluttering ahead of the dinos. */
+export function butterflySVG() {
+  return `<svg class="play-butterfly-art" viewBox="0 0 54 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="27" cy="22" rx="3.5" ry="13" fill="#6d4c41"/>
+    <circle cx="27" cy="9" r="4.5" fill="#4e342e"/>
+    <path d="M25 6 Q 21 0 17 2 M29 6 Q 33 0 37 2" stroke="#4e342e" stroke-width="2" fill="none"/>
+    <g class="bf-wing-l">
+      <ellipse cx="14" cy="15" rx="12" ry="8" fill="#ffd43b" stroke="#f08c00" stroke-width="1.8" transform="rotate(-25 14 15)"/>
+      <ellipse cx="16" cy="27" rx="9" ry="6" fill="#ff922b" stroke="#e8590c" stroke-width="1.8" transform="rotate(15 16 27)"/>
+      <circle cx="14" cy="15" r="3.5" fill="#ff6b6b" opacity=".7"/>
+    </g>
+    <g class="bf-wing-r">
+      <ellipse cx="40" cy="15" rx="12" ry="8" fill="#ffd43b" stroke="#f08c00" stroke-width="1.8" transform="rotate(25 40 15)"/>
+      <ellipse cx="38" cy="27" rx="9" ry="6" fill="#ff922b" stroke="#e8590c" stroke-width="1.8" transform="rotate(-15 38 27)"/>
+      <circle cx="40" cy="15" r="3.5" fill="#ff6b6b" opacity=".7"/>
+    </g>
+  </svg>`;
+}
+

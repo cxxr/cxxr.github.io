@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dino Keys – a touch typing adventure</title>
+  <meta name="description" content="A friendly dinosaur touch typing game for kids. Hatch eggs, stomp through the jungle and race the pterodactyls!">
+  <meta name="theme-color" content="#7bd389">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap"></noscript>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main id="app">
+    <!-- Title -->
+    <section id="screen-title" class="screen active" aria-label="Title">
+      <div class="scene-host" data-theme="meadow"></div>
+      <div class="title-content">
+        <h1 class="logo" aria-label="Dino Keys">
+          <span>D</span><span>i</span><span>n</span><span>o</span>
+          <span class="gap"></span>
+          <span>K</span><span>e</span><span>y</span><span>s</span>
+        </h1>
+        <div class="title-dino" id="title-dino"></div>
+        <button class="btn big primary" id="btn-start">▶ Let's Play!</button>
+        <p class="hint-text">Press <kbd>Space</kbd> or tap the button</p>
+      </div>
+    </section>
+
+    <!-- Player select / create -->
+    <section id="screen-profiles" class="screen" aria-label="Players">
+      <div class="scene-host" data-theme="nest"></div>
+      <div class="panel">
+        <h2>Who's playing?</h2>
+        <div id="profile-list" class="profile-list"></div>
+      </div>
+    </section>
+
+    <section id="screen-newplayer" class="screen" aria-label="New player">
+      <div class="scene-host" data-theme="nest"></div>
+      <div class="panel" id="newplayer-panel"></div>
+    </section>
+
+    <!-- World map -->
+    <section id="screen-map" class="screen" aria-label="Map">
+      <header class="topbar">
+        <button class="buddy-chip" id="map-buddy" title="Choose your dino buddy"></button>
+        <div class="topbar-title" id="map-player"></div>
+        <div class="spacer"></div>
+        <div class="pill" id="map-stars">⭐ 0</div>
+        <button class="btn small" id="btn-practice" title="Practice tricky keys">🎯 Practice</button>
+        <button class="btn small" id="btn-collection">🦕 My Dinos</button>
+        <button class="btn small icon" id="btn-parents" title="Grown-ups">⚙️</button>
+        <button class="btn small icon" id="btn-switch" title="Switch player">👥</button>
+      </header>
+      <div class="map-scroll" id="map-scroll"></div>
+    </section>
+
+    <!-- Gameplay -->
+    <section id="screen-game" class="screen" aria-label="Game">
+      <div class="scene-host" id="game-scene"></div>
+      <header class="hud">
+        <button class="btn small icon" id="btn-quit" title="Back to map">⬅</button>
+        <div class="hud-title" id="hud-title"></div>
+        <div class="progress"><div class="progress-fill" id="hud-progress"></div></div>
+        <div class="pill" id="hud-stat"></div>
+      </header>
+      <div class="stage" id="stage"></div>
+      <div class="finger-hint" id="finger-hint"></div>
+      <div class="kb-area" id="kb-area">
+        <div class="hand left" id="hand-left"></div>
+        <div class="keyboard" id="keyboard"></div>
+        <div class="hand right" id="hand-right"></div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="screen-results" class="screen" aria-label="Results">
+      <div class="scene-host" id="results-scene"></div>
+      <div class="panel results" id="results-panel"></div>
+    </section>
+
+    <!-- Dino collection -->
+    <section id="screen-collection" class="screen" aria-label="My dinos">
+      <div class="scene-host" data-theme="meadow"></div>
+      <div class="panel wide">
+        <div class="panel-head">
+          <button class="btn small icon" data-back="map">⬅</button>
+          <h2>My Dino Friends</h2>
+        </div>
+        <p class="sub">Tap a dino to make it your buddy!</p>
+        <div class="dino-grid" id="dino-grid"></div>
+      </div>
+    </section>
+
+    <!-- Grown-ups area -->
+    <section id="screen-parents" class="screen" aria-label="Grown-ups">
+      <div class="panel wide" id="parents-panel"></div>
+    </section>
+  </main>
+
+  <div id="fx-layer" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="bundle.js"></script>
+</body>
+</html>

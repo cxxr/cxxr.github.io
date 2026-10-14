@@ -1,0 +1,20 @@
+{
+  "name": "dino-keys",
+  "version": "1.0.0",
+  "description": "A friendly, animated, dinosaur-themed touch typing game for kids that runs entirely in the browser.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8090",
+    "build": "node scripts/bundle.js",
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "typing",
+    "touch-typing",
+    "kids",
+    "dinosaur",
+    "educational-game"
+  ],
+  "license": "MIT"
+}

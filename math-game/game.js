@@ -113,17 +113,89 @@ const TIER_ORDER = ['mega', 'big', 'cool', 'nice', 'easy'];
 const TIER_LABEL = Object.fromEntries(Object.entries(TIERS).map(([k, t]) => [k, t.label]));
 const TIER_COLOR = Object.fromEntries(Object.entries(TIERS).map(([k, t]) => [k, t.color]));
 
-// Build a concrete trick: tier physics + a random variant (avoid repeating the last one).
+// Special, super cool tricks unlocked ONLY with streaks of correct answers!
+const STREAK_TIERS = {
+  streak3: {
+    minStreak: 3,
+    badge: '⚡ 3-STREAK SPECIAL!',
+    color: '#00e5ff',
+    trail: 'spark',
+    speed: 480, H: 225, T: 1.65, points: 2000,
+    tricks: [
+      { name: 'SUPERMAN SEAT GRAB! 🦸', pose: 'seatgrab', lay: 0.4 },
+      { name: '720 TWISTER! 🌪️', spin: 2, rot: -0.5, pose: 'tuck' },
+      { name: 'CLIFFHANGER! 🧗', bar: 'turn', pose: 'cliffhanger', rot: -0.5 },
+    ],
+  },
+  streak5: {
+    minStreak: 5,
+    badge: '🔥 5-STREAK ON FIRE!',
+    color: '#ff3d00',
+    trail: 'fire',
+    speed: 520, H: 260, T: 1.95, points: 3500,
+    tricks: [
+      { name: 'CASH ROLL 360! 💰', rot: -1, spin: 1, whip: 1, pose: 'tuck' },
+      { name: 'SUPERMAN BACKFLIP! 🚀', rot: -1, pose: 'superman' },
+      { name: 'DOUBLE FRONT FLIP! 🔄', rot: 2, pose: 'tuck' },
+    ],
+  },
+  streak8: {
+    minStreak: 8,
+    badge: '🌟 HYPER STREAK GODLIKE!',
+    color: '#e040fb',
+    trail: 'rainbow',
+    speed: 560, H: 290, T: 2.3, points: 6000,
+    tricks: [
+      { name: 'SPECIAL FLIP 1080!!! 👑', rot: -1, spin: 3, pose: 'nohander' },
+      { name: 'THE TSUNAMI FLIP!!! 🌊', rot: -2, pose: 'superman' },
+      { name: '720 DOUBLE TAILWHIP!!! 💫', spin: 2, whip: 2, pose: 'whip' },
+    ],
+  },
+};
+
+// Build a concrete trick: tier physics + streak unlocks + random variant.
 let lastTrickName = '';
-function makeTrick(tierKey) {
+function makeTrick(tierKey, streak = 0) {
+  let streakTier = null;
+  if (streak >= 8) streakTier = STREAK_TIERS.streak8;
+  else if (streak >= 5) streakTier = STREAK_TIERS.streak5;
+  else if (streak >= 3) streakTier = STREAK_TIERS.streak3;
+
+  if (streakTier) {
+    let pool = streakTier.tricks.filter((t) => t.name !== lastTrickName);
+    if (!pool.length) pool = streakTier.tricks;
+    const v = pool[randInt(0, pool.length - 1)];
+    lastTrickName = v.name;
+    return {
+      tier: tierKey,
+      isStreakTrick: true,
+      streakLevel: streakTier.minStreak,
+      badge: streakTier.badge,
+      trail: streakTier.trail,
+      color: streakTier.color,
+      points: streakTier.points,
+      speed: streakTier.speed,
+      H: streakTier.H,
+      T: streakTier.T,
+      rot: 0, spin: 0, whip: 0, bar: null, crank: 0, lay: 0, pose: 'ride',
+      ...v,
+    };
+  }
+
   const tier = TIERS[tierKey];
   let pool = tier.tricks.filter((t) => t.name !== lastTrickName);
   if (!pool.length) pool = tier.tricks;
   const v = pool[randInt(0, pool.length - 1)];
   lastTrickName = v.name;
   return {
-    tier: tierKey, color: tier.color, points: tier.points, speed: tier.speed,
-    H: tier.H, T: tier.T,
+    tier: tierKey,
+    isStreakTrick: false,
+    trail: null,
+    color: tier.color,
+    points: tier.points,
+    speed: tier.speed,
+    H: tier.H,
+    T: tier.T,
     rot: 0, spin: 0, whip: 0, bar: null, crank: 0, lay: 0, pose: 'ride',
     ...v,
   };
@@ -324,6 +396,10 @@ const sfx = {
     noise(1.2, { vol: 0.08, f0: 1500, f1: 1200 });
   },
   fanfare: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.3, { type: 'triangle', vol: 0.15, delay: i * 0.13 })),
+  streakUnlock: () => {
+    [440, 554, 659, 880, 1108].forEach((f, i) => tone(f, 0.18, { type: 'square', vol: 0.14, delay: i * 0.045 }));
+    noise(0.4, { vol: 0.16, f0: 600, f1: 3200, delay: 0.08 });
+  },
 };
 
 // ---------- MIDI Stage Music Engine (Dynamic Crossfading Chiptunes) ----------
@@ -1032,18 +1108,22 @@ function submit() {
     sfx.wrong();
     showFeedback(false);
   }
-  rider.trick = makeTrick(key);
+  rider.trick = makeTrick(key, game.streak);
   const curRamp = currentRamp();
   if (curRamp) sizeRampForTrick(curRamp, rider.trick);
-  const idx = TIER_ORDER.indexOf(key);
-  if (idx >= 0 && idx < game.bestTrickIdx) { game.bestTrickIdx = idx; game.bestTrickName = rider.trick.name.replace(/!+$/, ''); }
+  const idx = rider.trick.isStreakTrick ? -1 : TIER_ORDER.indexOf(key);
+  if (rider.trick.isStreakTrick || (idx >= 0 && idx < game.bestTrickIdx)) {
+    game.bestTrickIdx = idx;
+    game.bestTrickName = rider.trick.name.replace(/!+$/, '');
+  }
   phase = 'go';
   updateHUD();
 }
 
 // Demo mode (menu background): pick a random trick automatically.
 function autoTrick() {
-  rider.trick = makeTrick(TIER_ORDER[randInt(0, TIER_ORDER.length - 1)]);
+  const demoStreak = Math.random() < 0.25 ? [3, 5, 8][randInt(0, 2)] : 0;
+  rider.trick = makeTrick(TIER_ORDER[randInt(0, TIER_ORDER.length - 1)], demoStreak);
   const curRamp = currentRamp();
   if (curRamp) sizeRampForTrick(curRamp, rider.trick);
   phase = 'go';
@@ -1062,8 +1142,15 @@ function launch(r) {
   r.done = true;
   sfx.whoosh();
   const jinfo = JUMP_INFO[r.type] || JUMP_INFO.kicker;
-  addText(tr.name, VW * 0.64, 235, tr.points >= 1000 ? 56 : 48, tr.color);
-  addText(`off the ${jinfo.name}!`, VW * 0.64, 285, 26, '#ffe082');
+  if (tr.isStreakTrick) {
+    sfx.streakUnlock();
+    addText(tr.badge, VW * 0.64, 180, 36, '#ffd600');
+    addText(tr.name, VW * 0.64, 235, 58, tr.color);
+    addText(`off the ${jinfo.name}!`, VW * 0.64, 290, 26, '#ffe082');
+  } else {
+    addText(tr.name, VW * 0.64, 235, tr.points >= 1000 ? 56 : 48, tr.color);
+    addText(`off the ${jinfo.name}!`, VW * 0.64, 285, 26, '#ffe082');
+  }
 }
 
 function land() {
@@ -1075,7 +1162,13 @@ function land() {
   sfx.land();
   dust(rider.x, 12 + Math.floor(tr.H / 12));
   if (tr.tier === 'wobble') rider.wobbleT = 1.3;
-  if (tr.points >= 500) { confetti(rider.x, GROUND - 120, tr.points >= 1000 ? 70 : 35); sfx.cheer(); }
+  if (tr.isStreakTrick) {
+    confetti(rider.x, GROUND - 140, tr.streakLevel >= 8 ? 90 : tr.streakLevel >= 5 ? 65 : 45);
+    sfx.cheer();
+  } else if (tr.points >= 500) {
+    confetti(rider.x, GROUND - 120, tr.points >= 1000 ? 70 : 35);
+    sfx.cheer();
+  }
 
   if (mode === 'play') {
     if (tr.points) {
@@ -1174,6 +1267,37 @@ function update(dt) {
     rider.lay = tr.lay * 1.15 * hold;
     rider.pose = tr.pose;
     rider.blend = Math.sin(Math.PI * clamp((s - 0.04) / 0.86, 0, 1));
+
+    if (tr.isStreakTrick) {
+      const sx = rider.x - 30;
+      const sy = GROUND - rider.y - 10;
+      if (tr.trail === 'spark') {
+        particles.push({
+          x: sx + rand(-8, 8), y: sy + rand(-8, 8),
+          vx: rand(-140, -50), vy: rand(-50, 50),
+          g: 60, life: rand(0.3, 0.55), max: 0.55,
+          size: rand(4, 8), type: 'spark', color: '#00e5ff',
+        });
+      } else if (tr.trail === 'fire') {
+        const fireCols = ['#ff3d00', '#ff9100', '#ffea00', '#ff1744'];
+        particles.push({
+          x: sx + rand(-10, 10), y: sy + rand(-10, 10),
+          vx: rand(-160, -60), vy: rand(-80, -10),
+          g: -30, life: rand(0.35, 0.7), max: 0.7,
+          size: rand(5, 12), type: 'fire', color: fireCols[randInt(0, fireCols.length - 1)],
+        });
+      } else if (tr.trail === 'rainbow') {
+        const rainCols = ['#ff0055', '#ff9900', '#ffee00', '#00ff66', '#00ccff', '#cc00ff'];
+        particles.push({
+          x: sx + rand(-12, 12), y: sy + rand(-12, 12),
+          vx: rand(-170, -50), vy: rand(-70, 70),
+          g: 20, life: rand(0.4, 0.8), max: 0.8,
+          size: rand(6, 13), type: 'rainbow', color: rainCols[randInt(0, rainCols.length - 1)],
+          rot: rand(0, 6), vr: rand(-8, 8),
+        });
+      }
+    }
+
     if (s >= 1) land();
   } else {
     rider.crank += (rider.speed * dt) / 30;
@@ -2220,6 +2344,15 @@ function drawParticles() {
     if (p.type === 'dust') {
       const col = p.color || '190,140,90';
       ctx.fillStyle = `rgba(${col},${a * 0.8})`; circle(x, p.y, p.size);
+    } else if (p.type === 'spark') {
+      ctx.fillStyle = p.color; ctx.globalAlpha = a; circle(x, p.y, p.size * a);
+      ctx.fillStyle = '#ffffff'; circle(x, p.y, (p.size * a) * 0.5); ctx.globalAlpha = 1;
+    } else if (p.type === 'fire') {
+      ctx.fillStyle = p.color; ctx.globalAlpha = a * 0.85; circle(x, p.y, p.size * (0.4 + 0.6 * a)); ctx.globalAlpha = 1;
+    } else if (p.type === 'rainbow') {
+      ctx.save(); ctx.translate(x, p.y); ctx.rotate(p.rot || 0); ctx.globalAlpha = a;
+      ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.restore();
     } else {
       ctx.save(); ctx.translate(x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = a;
       ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
@@ -2255,7 +2388,9 @@ const POSES = {
   indy:     { hip: [-12, -52], sh: [4, -75], head: [12, -87], hn: [-10, -47], hf: [12, -57], fn: null, ff: null },
   cancan:   { hip: [-4, -58],  sh: [7, -79], head: [14, -91], hn: [12, -57], hf: [12, -57], fn: [28, -50], ff: null },
   feetoff:  { hip: [-8, -60],  sh: [8, -80], head: [15, -92], hn: [12, -57], hf: [12, -57], fn: [-1, -30], ff: [-14, -28] },
-  xup:      { hip: [-8, -54],  sh: [7, -76], head: [14, -88], hn: [16, -60], hf: [8, -55],  fn: null, ff: null },
+  xup:         { hip: [-8, -54],  sh: [7, -76], head: [14, -88], hn: [16, -60], hf: [8, -55],  fn: null, ff: null },
+  seatgrab:    { hip: [-20, -68], sh: [2, -72],  head: [10, -82],  hn: [-14, -45], hf: [12, -57], fn: [-46, -72], ff: [-44, -64] },
+  cliffhanger: { hip: [10, -82],  sh: [10, -104], head: [12, -116], hn: [12, -57], hf: [12, -57], fn: [14, -58],  ff: [10, -58] },
 };
 
 const P = (a) => ({ x: a[0], y: a[1] });
@@ -2375,6 +2510,10 @@ function drawRider() {
   ctx.scale(BIKE_SCALE, BIKE_SCALE * (1 - 0.1 * rider.squash));
   ctx.translate(0, -32);
   ctx.rotate(ang);
+  if (phase === 'air' && rider.trick && rider.trick.isStreakTrick) {
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = rider.trick.color;
+  }
   if (rider.spin) {
     const c = Math.cos(rider.spin);
     ctx.scale(c < 0 ? Math.min(-0.2, c) : Math.max(0.2, c), 1);
@@ -2453,13 +2592,36 @@ function updateHUD() {
     ui.lives.classList.remove('hidden');
     const hearts = game.missStreak === 0 ? '❤️❤️❤️' : game.missStreak === 1 ? '❤️❤️🖤' : '❤️🖤🖤';
     ui.lives.textContent = hearts;
-    ui.streak.textContent = `🔥 Streak: ${game.streak} (Lvl ${game.diffStage})`;
     ui.streak.classList.remove('hidden');
+    if (game.streak >= 8) {
+      ui.streak.textContent = `🌟 HYPER STREAK: ${game.streak}! (Lvl ${game.diffStage})`;
+    } else if (game.streak >= 5) {
+      ui.streak.textContent = `🔥 ON FIRE: ${game.streak}! (Lvl ${game.diffStage})`;
+    } else if (game.streak >= 3) {
+      ui.streak.textContent = `⚡ SPECIAL STREAK: ${game.streak}! (Lvl ${game.diffStage})`;
+    } else if (game.streak === 2) {
+      ui.streak.textContent = `🔥 2 in a row (1 more for Special!) (Lvl ${game.diffStage})`;
+    } else {
+      ui.streak.textContent = `🔥 Streak: ${game.streak} (Lvl ${game.diffStage})`;
+    }
   } else {
     ui.jump.textContent = `Jump ${Math.min(game.jump + 1, TOTAL_JUMPS)} / ${TOTAL_JUMPS}`;
     ui.lives.classList.add('hidden');
-    ui.streak.textContent = `🔥 ${game.streak} in a row!`;
-    ui.streak.classList.toggle('hidden', game.streak < 2);
+    if (game.streak >= 8) {
+      ui.streak.textContent = `🌟 HYPER STREAK: ${game.streak}!`;
+      ui.streak.classList.remove('hidden');
+    } else if (game.streak >= 5) {
+      ui.streak.textContent = `🔥 ON FIRE: ${game.streak}!`;
+      ui.streak.classList.remove('hidden');
+    } else if (game.streak >= 3) {
+      ui.streak.textContent = `⚡ SPECIAL STREAK: ${game.streak}!`;
+      ui.streak.classList.remove('hidden');
+    } else if (game.streak === 2) {
+      ui.streak.textContent = `🔥 2 in a row (1 more for Special Trick!)`;
+      ui.streak.classList.remove('hidden');
+    } else {
+      ui.streak.classList.add('hidden');
+    }
   }
 }
 
@@ -2576,12 +2738,26 @@ function buildMenu() {
     s.onclick = () => { settings.color = c; localStorage.setItem('bmx_color', c); buildMenu(); };
     cs.appendChild(s);
   }
+  const streakGuideHtml = `
+    <div class="guide-row" style="background:#0091ea">
+      <div class="guide-row-head"><span>⚡ 3-Streak Special</span><span>Streak 3+</span></div>
+      <div class="guide-row-tricks">SUPERMAN SEAT GRAB, 720 TWISTER, CLIFFHANGER (+ Electric Cyan Trail)</div>
+    </div>
+    <div class="guide-row" style="background:#e64a19">
+      <div class="guide-row-head"><span>🔥 5-Streak On Fire</span><span>Streak 5+</span></div>
+      <div class="guide-row-tricks">CASH ROLL 360, SUPERMAN BACKFLIP, DOUBLE FRONT FLIP (+ Blazing Fire Trail)</div>
+    </div>
+    <div class="guide-row" style="background:#8e24aa">
+      <div class="guide-row-head"><span>🌟 8-Streak Hyper Godlike</span><span>Streak 8+</span></div>
+      <div class="guide-row-tricks">SPECIAL FLIP 1080, THE TSUNAMI FLIP, 720 DOUBLE TAILWHIP (+ Cosmic Rainbow Trail)</div>
+    </div>
+  `;
   if (settings.level === 'dynamic') {
     $('guide').innerHTML = `
       <div class="guide-row" style="background:#ff6d00">
         <div class="guide-row-head"><span>⚡ Dynamic Endless Mode</span><span>Adaptive</span></div>
         <div class="guide-row-tricks">Starts easy (+ up to 7) & gets harder as your streak continues! Drops a level on a miss. 3 misses in a row = Wipeout!</div>
-      </div>` + TIER_ORDER.map((k) => {
+      </div>` + streakGuideHtml + TIER_ORDER.map((k) => {
         const tier = TIERS[k];
         const list = tier.tricks.map((t) => t.name.replace(/!+$/, '')).join(', ');
         return `<div class="guide-row" style="background:${tier.color}">
@@ -2591,7 +2767,7 @@ function buildMenu() {
       }).join('');
   } else {
     const th = LEVELS[settings.level].th;
-    $('guide').innerHTML = TIER_ORDER.map((k, i) => {
+    $('guide').innerHTML = streakGuideHtml + TIER_ORDER.map((k, i) => {
       const tier = TIERS[k];
       const timeText = i < th.length ? `under ${th[i]} sec` : 'slower';
       const list = tier.tricks.map((t) => t.name.replace(/!+$/, '')).join(', ');

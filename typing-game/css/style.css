@@ -23,6 +23,12 @@
   --f-index-l: #ffd960;
   --f-index-r: #ffb36b;
   --f-thumb: #d8dee6;
+
+  /* iPad / Safe Area insets */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 * { box-sizing: border-box; }
@@ -36,7 +42,10 @@ html, body {
   background: #bfe9ff;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior: none;
 }
 
 button { font-family: inherit; color: inherit; }
@@ -2506,4 +2515,148 @@ input:checked + .slider:before { transform: translateX(24px); }
 @keyframes fx-fly {
   0% { transform: translate(0, 0) scale(0.6) rotate(0deg); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(1.4) rotate(var(--rot)); opacity: 0; }
+}
+
+/* ==========================================================================
+   PWA & iPad Installation Styles
+   ========================================================================== */
+@media (display-mode: standalone) {
+  .pwa-install-btn {
+    display: none !important;
+  }
+}
+
+.pwa-install-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.pwa-install-modal.open {
+  display: flex;
+}
+.pwa-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 24, 32, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.pwa-modal-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 32px;
+  padding: 32px 28px 28px;
+  text-align: center;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.3);
+  animation: pwa-card-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pwa-card-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.pwa-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f3f5;
+  border: none;
+  color: #495057;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.pwa-modal-close:hover {
+  background: #e9ecef;
+}
+.pwa-modal-badge {
+  margin: 0 auto 14px;
+  width: 82px;
+  height: 82px;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pwa-modal-badge img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.pwa-modal-card h2 {
+  margin: 0 0 6px;
+  font-size: 1.7rem;
+  color: var(--ink);
+}
+.pwa-modal-card .sub {
+  margin: 0 0 20px;
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+.pwa-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+.pwa-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  border: 1.5px solid #dee2e6;
+}
+.pwa-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #ffffff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.pwa-step-text {
+  font-size: 1.05rem;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.share-icon-pill, .plus-icon-pill {
+  display: inline-block;
+  background: #e9ecef;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.pwa-modal-actions {
+  display: flex;
+  justify-content: center;
+}
+.pwa-modal-actions .btn {
+  width: 100%;
+  font-size: 1.25rem;
+  padding: 14px 24px;
+  border-radius: 999px;
 }

@@ -2,11 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Dino Keys – a touch typing adventure</title>
   <meta name="description" content="A friendly dinosaur touch typing game for kids. Hatch eggs, stomp through the jungle and race the pterodactyls!">
   <meta name="theme-color" content="#7bd389">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Apple iOS / iPadOS PWA Configuration -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dino Keys">
+  <meta name="application-name" content="Dino Keys">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -27,6 +45,7 @@
         <div class="title-dino" id="title-dino"></div>
         <button class="btn big primary" id="btn-start">▶ Let's Play!</button>
         <p class="hint-text">Press <kbd>Space</kbd> or tap the button</p>
+        <button class="btn small pwa-install-btn" id="btn-pwa-install" style="margin-top: 6px;">📲 Install on iPad</button>
       </div>
     </section>
 
@@ -51,6 +70,7 @@
         <div class="topbar-title" id="map-player"></div>
         <div class="spacer"></div>
         <div class="pill" id="map-stars">⭐ 0</div>
+        <button class="btn small pwa-install-btn" id="btn-map-install" title="Install on iPad">📲 Install</button>
         <button class="btn small" id="btn-practice" title="Practice tricky keys">🎯 Practice</button>
         <button class="btn small" id="btn-collection">🦕 My Dinos</button>
         <button class="btn small icon" id="btn-parents" title="Grown-ups">⚙️</button>
@@ -105,6 +125,83 @@
   <div id="fx-layer" aria-hidden="true"></div>
   <div id="toast" class="toast" role="status"></div>
 
+  <!-- iPad / PWA Install Guide Modal -->
+  <div id="modal-install" class="pwa-install-modal" role="dialog" aria-modal="true" aria-label="Install Dino Keys on iPad">
+    <div class="pwa-modal-backdrop" id="pwa-backdrop"></div>
+    <div class="pwa-modal-card">
+      <button class="pwa-modal-close" id="pwa-close" aria-label="Close">✕</button>
+      <div class="pwa-modal-badge">
+        <img src="icons/icon-180.png" alt="Dino Keys Icon" width="76" height="76">
+      </div>
+      <h2>Install on your iPad</h2>
+      <p class="sub">Play in full screen anytime — even offline in the car or airplane!</p>
+      
+      <div class="pwa-steps">
+        <div class="pwa-step">
+          <div class="pwa-step-num">1</div>
+          <div class="pwa-step-text">Tap the <strong>Share</strong> button <span class="share-icon-pill">⎋</span> in Safari's top toolbar.</div>
+        </div>
+        <div class="pwa-step">
+          <div class="pwa-step-num">2</div>
+          <div class="pwa-step-text">Scroll down and tap <strong>Add to Home Screen</strong> <span class="plus-icon-pill">➕</span>.</div>
+        </div>
+        <div class="pwa-step">
+          <div class="pwa-step-num">3</div>
+          <div class="pwa-step-text">Tap <strong>Add</strong> in the top right corner. That's it! 🦖</div>
+        </div>
+      </div>
+
+      <div class="pwa-modal-actions">
+        <button class="btn big primary" id="pwa-gotit">Got It!</button>
+      </div>
+    </div>
+  </div>
+
   <script src="bundle.js"></script>
+  <script>
+    // Register Service Worker for offline play & iPad PWA
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('./sw.js')
+          .then((reg) => {
+            console.log('[Dino Keys] PWA Service Worker active:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('[Dino Keys] SW registration notice:', err);
+          });
+      });
+    }
+
+    // PWA install prompt handler & iPad install modal logic
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    function openInstallModal() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+        });
+        return;
+      }
+      const m = document.getElementById('modal-install');
+      if (m) m.classList.add('open');
+    }
+
+    function closeInstallModal() {
+      const m = document.getElementById('modal-install');
+      if (m) m.classList.remove('open');
+    }
+
+    document.getElementById('btn-pwa-install')?.addEventListener('click', openInstallModal);
+    document.getElementById('btn-map-install')?.addEventListener('click', openInstallModal);
+    document.getElementById('pwa-close')?.addEventListener('click', closeInstallModal);
+    document.getElementById('pwa-backdrop')?.addEventListener('click', closeInstallModal);
+    document.getElementById('pwa-gotit')?.addEventListener('click', closeInstallModal);
+  </script>
 </body>
 </html>

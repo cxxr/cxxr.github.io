@@ -58,6 +58,17 @@ class App {
   }
 
   initEvents() {
+    // Global user interaction listener to unlock Web Audio on iOS / iPadOS Safari
+    const unlockOnGesture = () => {
+      unlockAudio();
+      window.removeEventListener('touchstart', unlockOnGesture);
+      window.removeEventListener('touchend', unlockOnGesture);
+      window.removeEventListener('click', unlockOnGesture);
+    };
+    window.addEventListener('touchstart', unlockOnGesture, { passive: true });
+    window.addEventListener('touchend', unlockOnGesture, { passive: true });
+    window.addEventListener('click', unlockOnGesture, { passive: true });
+
     // Physical keyboard input
     window.addEventListener('keydown', (e) => {
       // Space or Enter on title screen starts game

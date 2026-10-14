@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8ce99a"/>
+      <stop offset="60%" stop-color="#51cf66"/>
+      <stop offset="100%" stop-color="#2b8a3e"/>
+    </linearGradient>
+
+    <!-- Keycap 3D Gradient -->
+    <linearGradient id="key-top" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f1f3f5"/>
+    </linearGradient>
+
+    <!-- Sparkle Glow -->
+    <radialGradient id="sparkle-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff9db"/>
+      <stop offset="60%" stop-color="#ffd43b"/>
+      <stop offset="100%" stop-color="rgba(255,212,59,0)"/>
+    </radialGradient>
+
+    <!-- Drop Shadows -->
+    <filter id="icon-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#144d22" flood-opacity="0.35"/>
+    </filter>
+    <filter id="key-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- App Background (Solid with rounded corners for standard icon, fills canvas) -->
+  <rect width="512" height="512" rx="112" fill="url(#bg-grad)"/>
+
+  <!-- Subtle Inset Highlight on Top Edge -->
+  <path d="M112 0 L400 0 Q512 0 512 112 L512 160 Q380 40 112 40 L0 160 L0 112 Q0 0 112 0 Z" fill="#ffffff" opacity="0.16"/>
+
+  <!-- Sunburst backdrop rays -->
+  <g opacity="0.12" fill="#ffffff" transform="translate(256, 256)">
+    <polygon points="0,0 -40,-256 40,-256"/>
+    <polygon points="0,0 160,-220 220,-160"/>
+    <polygon points="0,0 256,-40 256,40"/>
+    <polygon points="0,0 220,160 160,220"/>
+    <polygon points="0,0 40,256 -40,256"/>
+    <polygon points="0,0 -160,220 -220,160"/>
+    <polygon points="0,0 -256,40 -256,-40"/>
+    <polygon points="0,0 -220,-160 -160,-220"/>
+  </g>
+
+  <!-- Rexy Dinosaur Illustration (Centered, friendly, vibrant) -->
+  <g transform="translate(14, -10)" filter="url(#icon-shadow)">
+    <!-- Dino Tail -->
+    <path d="M170 330 Q 110 350 70 300 Q 110 270 180 290 Z" fill="#40c057"/>
+
+    <!-- Dino Back Spikes -->
+    <polygon points="190,190 170,160 210,175" fill="#fab005"/>
+    <polygon points="230,175 215,140 255,160" fill="#fab005"/>
+    <polygon points="275,165 265,130 305,155" fill="#fab005"/>
+
+    <!-- Dino Body -->
+    <ellipse cx="250" cy="310" rx="95" ry="85" fill="#51cf66"/>
+    <!-- Dino Belly -->
+    <ellipse cx="230" cy="325" rx="68" ry="58" fill="#d3f9d8"/>
+
+    <!-- Dino Neck and Head -->
+    <path d="M260 270 Q 300 240 320 180 Q 380 150 410 190 Q 425 240 370 270 Q 320 290 280 300 Z" fill="#51cf66"/>
+    <ellipse cx="340" cy="210" rx="72" ry="60" fill="#51cf66"/>
+    <ellipse cx="380" cy="225" rx="42" ry="32" fill="#51cf66"/>
+
+    <!-- Nostril -->
+    <circle cx="408" cy="215" r="4" fill="#2b3a4a"/>
+
+    <!-- Big Happy Eye -->
+    <ellipse cx="330" cy="180" rx="22" ry="24" fill="#ffffff" stroke="#2b8a3e" stroke-width="2"/>
+    <circle cx="336" cy="182" r="14" fill="#2b3a4a"/>
+    <circle cx="342" cy="176" r="5.5" fill="#ffffff"/>
+    <circle cx="332" cy="188" r="2.5" fill="#ffffff"/>
+
+    <!-- Cute Rosy Cheek -->
+    <ellipse cx="355" cy="235" rx="16" ry="10" fill="#ff8787" opacity="0.6"/>
+
+    <!-- Big Cheerful Smile -->
+    <path d="M340 240 Q 375 270 405 235" fill="none" stroke="#2b3a4a" stroke-width="6" stroke-linecap="round"/>
+    <!-- Tongue in smile -->
+    <path d="M362 254 Q 375 268 388 252 Z" fill="#ff6b6b"/>
+    <!-- Little Sharp Tooth -->
+    <polygon points="352,242 358,252 364,244" fill="#ffffff"/>
+
+    <!-- Cute Tiny Dinosaur Arm -->
+    <path d="M310 290 Q 345 305 340 320 Q 325 325 300 305 Z" fill="#40c057"/>
+  </g>
+
+  <!-- Giant Prehistoric Keyboard Keycap [ D ] at Bottom Right -->
+  <g transform="translate(240, 290)" filter="url(#key-shadow)">
+    <!-- Key Base / Bevel Bottom -->
+    <rect x="0" y="24" width="200" height="130" rx="34" fill="#ced4da"/>
+    <rect x="0" y="16" width="200" height="130" rx="34" fill="#dee2e6"/>
+    <!-- Key Surface Top -->
+    <rect x="0" y="0" width="200" height="130" rx="34" fill="url(#key-top)"/>
+
+    <!-- Key Letter "D" (for Dino / Home Row) -->
+    <text x="100" y="88" font-family="-apple-system, system-ui, 'Fredoka', 'Segoe UI', Roboto, sans-serif"
+      font-size="76" font-weight="800" fill="#2b8a3e" text-anchor="middle">D</text>
+
+    <!-- Finger bump dot on key -->
+    <circle cx="100" cy="110" r="5" fill="#51cf66"/>
+  </g>
+
+  <!-- Sparkle Stars -->
+  <g transform="translate(80, 80)">
+    <polygon points="0,-24 7,-7 24,0 7,7 0,24 -7,7 -24,0 -7,-7" fill="#fff9db"/>
+    <polygon points="0,-16 5,-5 16,0 5,5 0,16 -5,5 -16,0 -5,-5" fill="#ffd43b"/>
+  </g>
+  <g transform="translate(420, 90)">
+    <polygon points="0,-18 5,-5 18,0 5,5 0,18 -5,5 -18,0 -5,-5" fill="#fff9db"/>
+    <polygon points="0,-12 4,-4 12,0 4,4 0,12 -4,4 -12,0 -4,-4" fill="#ffd43b"/>
+  </g>
+  <g transform="translate(80, 420)">
+    <polygon points="0,-16 5,-5 16,0 5,5 0,16 -5,5 -16,0 -5,-5" fill="#ffd43b"/>
+  </g>
+</svg>

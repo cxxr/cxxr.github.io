@@ -8,6 +8,7 @@ import { DINOS, getDino, SPECIES_NAMES } from './dinos.js';
 import { renderScene, renderStaticScenes } from './scene.js';
 import { KeyboardView } from './keyboard-view.js';
 import { HatchMode, TrailMode, MeteorMode, RaceMode } from './game-modes.js';
+import { WorldMap } from './world-map.js';
 import { unlockAudio, configureAudio, startMusic, sfx, say } from './audio.js';
 import { fx } from './fx.js';
 
@@ -300,72 +301,17 @@ class App {
     document.getElementById('map-stars').textContent = `⭐ ${totalStars(p)}`;
 
     const scrollEl = document.getElementById('map-scroll');
-    scrollEl.innerHTML = '';
-
-    const opts = { startWorld: p.startWorld, unlockAll: p.settings.unlockAll };
-    const curLvl = currentLevel(p.levels, opts);
-
-    const worldThemes = {
-      nest: '#ff922b',
-      meadow: '#51cf66',
-      jungle: '#20c997',
-      volcano: '#ff6b6b',
-      canyon: '#fcc419',
-      mountain: '#339af0',
-      sky: '#845ef7',
-    };
-
-    WORLDS.forEach((world) => {
-      const card = document.createElement('div');
-      card.className = 'world-card';
-      const col = worldThemes[world.id] || '#5cc46f';
-      card.style.setProperty('--theme-color', col);
-
-      const levelNodesHtml = world.levels
-        .map((lvl) => {
-          const unlocked = isUnlocked(lvl.id, p.levels, opts);
-          const isCurrent = curLvl && curLvl.id === lvl.id;
-          const starsEarned = p.levels[lvl.id]?.stars || 0;
-          const starsStr = '⭐'.repeat(starsEarned);
-          const rewardIcon = lvl.reward ? (starsEarned > 0 ? '🦕' : '🥚') : '';
-
-          return `
-          <div class="level-node ${unlocked ? 'unlocked' : 'locked'} ${isCurrent ? 'current' : ''}"
-               data-level-id="${lvl.id}"
-               title="${lvl.title}">
-            ${rewardIcon ? `<span class="level-reward-icon">${rewardIcon}</span>` : ''}
-            <div class="level-num">${lvl.indexInWorld + 1}</div>
-            <div class="level-stars">${starsStr}</div>
-          </div>
-        `;
-        })
-        .join('');
-
-      card.innerHTML = `
-        <div class="world-head">
-          <div class="world-title-wrap">
-            <h3>${world.name}</h3>
-            <p class="world-blurb">${world.ages} · ${world.blurb}</p>
-          </div>
-        </div>
-        <div class="world-levels">${levelNodesHtml}</div>
-      `;
-
-      card.querySelectorAll('.level-node.unlocked').forEach((node) => {
-        node.addEventListener('click', () => {
-          sfx.click();
-          this.startLevel(node.dataset.levelId);
-        });
-      });
-
-      scrollEl.appendChild(card);
+    if (this.worldMap) {
+      this.worldMap.destroy();
+    }
+    this.worldMap = new WorldMap({
+      container: scrollEl,
+      store: this.store,
+      onSelectLevel: (lvlId) => {
+        this.startLevel(lvlId);
+      },
     });
-
-    // Auto-scroll so current level is visible
-    setTimeout(() => {
-      const curEl = scrollEl.querySelector('.level-node.current');
-      if (curEl) curEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+    this.worldMap.render();
   }
 
   /* ==========================================================================

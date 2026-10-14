@@ -24,6 +24,7 @@ const files = [
   'fx.js',
   'keyboard-view.js',
   'game-modes.js',
+  'world-map.js',
   'main.js',
 ];
 

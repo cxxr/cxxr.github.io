@@ -326,6 +326,377 @@ const sfx = {
   fanfare: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.3, { type: 'triangle', vol: 0.15, delay: i * 0.13 })),
 };
 
+// ---------- MIDI Stage Music Engine (Dynamic Crossfading Chiptunes) ----------
+const BPM = 132;
+const m2f = (m) => (m ? 440 * Math.pow(2, (m - 69) / 12) : 0);
+
+const STAGE_TRACKS = {
+  farm: {
+    // Barnyard Bluegrass Hoedown: Bouncy ragtime banjo arps, boom-chick bass, playful country lead
+    leadWave: 'square', harmWave: 'square', bassWave: 'triangle',
+    leadVol: 0.16, harmVol: 0.10, bassVol: 0.22,
+    lead: [
+      74, 0, 78, 76, 74, 0, 69, 0, 71, 0, 69, 0, 66, 69, 71, 73,
+      74, 0, 73, 0, 69, 0, 64, 66, 69, 0, 73, 0, 74, 73, 71, 69,
+      71, 0, 74, 76, 78, 0, 74, 0, 71, 74, 71, 69, 66, 0, 69, 0,
+      67, 0, 71, 0, 74, 0, 78, 0, 76, 74, 73, 71, 69, 71, 73, 76,
+    ],
+    harm: [
+      0, 66, 69, 74, 0, 66, 69, 74, 0, 66, 69, 74, 0, 66, 69, 74,
+      0, 64, 69, 73, 0, 64, 69, 73, 0, 64, 69, 73, 0, 64, 69, 73,
+      0, 66, 71, 74, 0, 66, 71, 74, 0, 66, 71, 74, 0, 66, 71, 74,
+      0, 67, 71, 74, 0, 67, 71, 74, 0, 67, 71, 76, 0, 67, 71, 76,
+    ],
+    bass: [
+      38, 0, 50, 0, 45, 0, 50, 0, 38, 0, 50, 0, 45, 0, 47, 49,
+      45, 0, 57, 0, 40, 0, 52, 0, 45, 0, 57, 0, 40, 0, 42, 44,
+      47, 0, 59, 0, 42, 0, 54, 0, 47, 0, 59, 0, 42, 0, 43, 45,
+      43, 0, 55, 0, 38, 0, 50, 0, 43, 0, 55, 0, 45, 47, 49, 50,
+    ],
+    drum: [
+      'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h', 'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h',
+      'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h', 'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h',
+      'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h', 'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h',
+      'kh', 'h', 'h', 'h', 'sh', 'h', 'h', 'h', 'kh', 'h', 'h', 'h', 'sh', 'h', 's', 's',
+    ],
+  },
+  skate: {
+    // Skate Punk / Pop-Punk Power Chiptune: Driving 8th bass, crunchy power-chord stabs, high-speed rock
+    leadWave: 'square', harmWave: 'sawtooth', bassWave: 'square',
+    leadVol: 0.18, harmVol: 0.12, bassVol: 0.20,
+    lead: [
+      74, 74, 0, 74, 0, 76, 0, 78, 0, 78, 76, 74, 76, 0, 0, 0,
+      73, 73, 0, 73, 0, 74, 0, 76, 0, 76, 74, 73, 74, 0, 76, 0,
+      78, 0, 78, 0, 81, 0, 78, 0, 76, 0, 74, 0, 76, 74, 71, 0,
+      71, 74, 0, 74, 0, 76, 0, 78, 0, 81, 0, 78, 76, 74, 76, 78,
+    ],
+    harm: [
+      62, 0, 0, 69, 0, 62, 0, 0, 62, 0, 0, 69, 0, 0, 62, 0,
+      57, 0, 0, 64, 0, 57, 0, 0, 57, 0, 0, 64, 0, 0, 57, 0,
+      59, 0, 0, 66, 0, 59, 0, 0, 59, 0, 0, 66, 0, 0, 59, 0,
+      55, 0, 0, 62, 0, 55, 0, 0, 55, 0, 0, 62, 0, 57, 0, 57,
+    ],
+    bass: [
+      50, 0, 50, 0, 50, 0, 50, 50, 50, 0, 50, 0, 57, 0, 55, 0,
+      45, 0, 45, 0, 45, 0, 45, 45, 45, 0, 45, 0, 52, 0, 54, 0,
+      47, 0, 47, 0, 47, 0, 47, 47, 47, 0, 47, 0, 50, 0, 49, 0,
+      43, 0, 43, 0, 43, 0, 43, 43, 43, 0, 43, 0, 45, 45, 47, 49,
+    ],
+    drum: [
+      'kh', 'h', 'o', 'h', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'kh', 'h', 'sh', 'h', 'o', 'h',
+      'kh', 'h', 'o', 'h', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'kh', 'h', 'sh', 'h', 'o', 'h',
+      'kh', 'h', 'o', 'h', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'kh', 'h', 'sh', 'h', 'o', 'h',
+      'kh', 'h', 'o', 'h', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'kh', 'h', 's', 's', 's', 's',
+    ],
+  },
+  urban: {
+    // Urban Jungle Funk & Boom-Bap: Syncopated slap bass, warm chord stabs, laid-back pentatonic groove
+    leadWave: 'square', harmWave: 'triangle', bassWave: 'triangle',
+    leadVol: 0.16, harmVol: 0.14, bassVol: 0.24,
+    lead: [
+      0, 69, 74, 0, 76, 78, 0, 74, 0, 76, 0, 74, 69, 0, 71, 0,
+      0, 69, 73, 0, 74, 76, 0, 73, 0, 74, 0, 73, 69, 0, 67, 0,
+      0, 71, 74, 0, 76, 78, 0, 81, 0, 78, 0, 76, 74, 71, 74, 0,
+      0, 67, 71, 0, 74, 76, 0, 74, 0, 71, 0, 69, 67, 69, 71, 73,
+    ],
+    harm: [
+      0, 0, 0, 0, 66, 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 66, 0, 0, 0, 0, 0, 71, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 67, 0, 0, 0, 0, 0, 71, 0, 0, 0, 0, 0,
+    ],
+    bass: [
+      38, 0, 0, 50, 0, 0, 38, 0, 0, 45, 0, 47, 49, 50, 0, 0,
+      45, 0, 0, 57, 0, 0, 45, 0, 0, 52, 0, 54, 55, 57, 0, 0,
+      47, 0, 0, 59, 0, 0, 47, 0, 0, 45, 0, 47, 49, 47, 0, 0,
+      43, 0, 0, 55, 0, 0, 43, 0, 0, 45, 0, 47, 45, 0, 47, 49,
+    ],
+    drum: [
+      'kh', '0', 'h', '0', 'sh', '0', 'kh', '0', '0', '0', 'kh', '0', 'sh', '0', 'h', '0',
+      'kh', '0', 'h', '0', 'sh', '0', 'kh', '0', '0', '0', 'kh', '0', 'sh', '0', 'h', '0',
+      'kh', '0', 'h', '0', 'sh', '0', 'kh', '0', '0', '0', 'kh', '0', 'sh', '0', 'h', '0',
+      'kh', '0', 'h', '0', 'sh', '0', 'kh', '0', '0', '0', 'kh', 'kh', 'sh', '0', 'sh', '0',
+    ],
+  },
+  mountain: {
+    // Mountain Descent: High-octane alpine rush, galloping 16th bass, cascading wind arps, heroic fanfare
+    leadWave: 'square', harmWave: 'triangle', bassWave: 'sawtooth',
+    leadVol: 0.17, harmVol: 0.10, bassVol: 0.18,
+    lead: [
+      74, 0, 0, 74, 78, 0, 81, 0, 86, 0, 81, 0, 78, 0, 76, 78,
+      76, 0, 0, 73, 76, 0, 81, 0, 85, 0, 81, 0, 76, 0, 74, 76,
+      78, 0, 0, 74, 78, 0, 83, 0, 86, 0, 83, 0, 81, 0, 78, 76,
+      79, 0, 0, 74, 79, 0, 83, 0, 81, 0, 78, 0, 76, 74, 76, 78,
+    ],
+    harm: [
+      62, 66, 69, 74, 66, 69, 74, 78, 69, 74, 78, 81, 78, 74, 69, 66,
+      57, 61, 64, 69, 61, 64, 69, 73, 64, 69, 73, 76, 73, 69, 64, 61,
+      59, 62, 66, 71, 62, 66, 71, 74, 66, 71, 74, 78, 74, 71, 66, 62,
+      55, 59, 62, 67, 59, 62, 67, 71, 62, 67, 71, 74, 64, 69, 73, 76,
+    ],
+    bass: [
+      38, 38, 50, 38, 38, 38, 50, 38, 38, 38, 50, 38, 45, 47, 49, 50,
+      45, 45, 57, 45, 45, 45, 57, 45, 45, 45, 57, 45, 52, 54, 55, 57,
+      47, 47, 59, 47, 47, 47, 59, 47, 47, 47, 59, 47, 50, 52, 54, 55,
+      43, 43, 55, 43, 43, 43, 55, 43, 43, 43, 55, 43, 45, 47, 49, 52,
+    ],
+    drum: [
+      'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h',
+      'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h',
+      'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h',
+      'kh', 'h', 'h', 'kh', 'sh', 'h', 'kh', 'h', 'kh', 'h', 'kh', 'kh', 's', 's', 's', 's',
+    ],
+  },
+  beach: {
+    // Ocean Beach Calypso / Reggae Surf: Tropical steel drum vibes, one-drop bass, offbeat skanks
+    leadWave: 'sine', harmWave: 'triangle', bassWave: 'triangle',
+    leadVol: 0.22, harmVol: 0.12, bassVol: 0.22,
+    lead: [
+      0, 74, 0, 78, 0, 81, 78, 0, 74, 0, 78, 0, 76, 74, 0, 71,
+      0, 73, 0, 76, 0, 81, 76, 0, 73, 0, 76, 0, 74, 73, 0, 69,
+      0, 74, 0, 78, 0, 83, 78, 0, 74, 0, 81, 0, 78, 74, 0, 71,
+      0, 71, 0, 74, 0, 79, 74, 0, 71, 0, 74, 0, 73, 71, 73, 76,
+    ],
+    harm: [
+      0, 0, 66, 0, 0, 0, 69, 0, 0, 0, 66, 0, 0, 0, 69, 0,
+      0, 0, 64, 0, 0, 0, 69, 0, 0, 0, 64, 0, 0, 0, 69, 0,
+      0, 0, 66, 0, 0, 0, 71, 0, 0, 0, 66, 0, 0, 0, 71, 0,
+      0, 0, 67, 0, 0, 0, 71, 0, 0, 0, 67, 0, 0, 0, 73, 0,
+    ],
+    bass: [
+      0, 0, 0, 0, 38, 0, 0, 0, 0, 0, 45, 0, 50, 0, 45, 0,
+      0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 52, 0, 57, 0, 52, 0,
+      0, 0, 0, 0, 47, 0, 0, 0, 0, 0, 54, 0, 59, 0, 54, 0,
+      0, 0, 0, 0, 43, 0, 0, 0, 0, 0, 50, 0, 45, 0, 49, 0,
+    ],
+    drum: [
+      '0', '0', 'h', '0', 'ks', '0', 'h', '0', '0', '0', 'h', '0', 'ks', '0', 'h', '0',
+      '0', '0', 'h', '0', 'ks', '0', 'h', '0', '0', '0', 'h', '0', 'ks', '0', 'h', '0',
+      '0', '0', 'h', '0', 'ks', '0', 'h', '0', '0', '0', 'h', '0', 'ks', '0', 'h', '0',
+      '0', '0', 'h', '0', 'ks', '0', 'h', '0', '0', '0', 'h', '0', 'ks', 'h', 'sh', 'o',
+    ],
+  },
+};
+
+let musicGain = null;
+let noiseBuffer = null;
+
+function getNoiseBuffer(a) {
+  if (!noiseBuffer) {
+    noiseBuffer = a.createBuffer(1, Math.floor(a.sampleRate * 1.0), a.sampleRate);
+    const d = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return noiseBuffer;
+}
+
+function getMusicGain() {
+  const a = audio();
+  if (!a) return null;
+  if (!musicGain) {
+    musicGain = a.createGain();
+    musicGain.gain.setValueAtTime(muted || mode !== 'play' ? 0.0001 : 0.075, a.currentTime);
+    musicGain.connect(a.destination);
+  }
+  return musicGain;
+}
+
+function playMusicNote(f, dur, t0, vol, wave = 'square', filterFreq = null) {
+  if (!actx || vol <= 0.0005 || !f) return;
+  const mg = getMusicGain();
+  if (!mg) return;
+  const osc = actx.createOscillator();
+  const g = actx.createGain();
+  osc.type = wave;
+  osc.frequency.setValueAtTime(f, t0);
+
+  const att = 0.012;
+  const dec = Math.min(dur * 0.7, 0.04);
+  const sus = vol * 0.75;
+  const rel = 0.02;
+
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + att);
+  g.gain.linearRampToValueAtTime(sus, t0 + att + dec);
+  g.gain.setValueAtTime(sus, Math.max(t0 + att + dec, t0 + dur - rel));
+  g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
+
+  if (filterFreq) {
+    const filt = actx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(filterFreq, t0);
+    osc.connect(filt).connect(g).connect(mg);
+  } else {
+    osc.connect(g).connect(mg);
+  }
+
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.03);
+  osc.onended = () => {
+    try { osc.disconnect(); g.disconnect(); } catch (e) {}
+  };
+}
+
+function playMusicDrum(type, t0, vol) {
+  if (!actx || vol <= 0.0005) return;
+  const mg = getMusicGain();
+  if (!mg) return;
+
+  // 'k': 8-bit punchy pitch-drop kick
+  if (type.includes('k')) {
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(135, t0);
+    osc.frequency.exponentialRampToValueAtTime(36, t0 + 0.08);
+    g.gain.setValueAtTime(vol * 0.42, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.085);
+    osc.connect(g).connect(mg);
+    osc.start(t0);
+    osc.stop(t0 + 0.09);
+    osc.onended = () => { try { osc.disconnect(); g.disconnect(); } catch (e) {} };
+  }
+
+  // 's': snappy chiptune snare
+  if (type.includes('s')) {
+    const dur = 0.09;
+    const src = actx.createBufferSource();
+    src.buffer = getNoiseBuffer(actx);
+    src.loop = true;
+    const filt = actx.createBiquadFilter();
+    filt.type = 'bandpass';
+    filt.frequency.setValueAtTime(1450, t0);
+    filt.Q.setValueAtTime(1.6, t0);
+    const g = actx.createGain();
+    g.gain.setValueAtTime(vol * 0.22, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(filt).connect(g).connect(mg);
+    src.start(t0);
+    src.stop(t0 + dur);
+
+    const osc = actx.createOscillator();
+    const og = actx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(180, t0);
+    og.gain.setValueAtTime(vol * 0.16, t0);
+    og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+    osc.connect(og).connect(mg);
+    osc.start(t0);
+    osc.stop(t0 + 0.055);
+    osc.onended = () => { try { osc.disconnect(); og.disconnect(); } catch (e) {} };
+  }
+
+  // 'h': closed hi-hat
+  if (type.includes('h')) {
+    const dur = 0.035;
+    const src = actx.createBufferSource();
+    src.buffer = getNoiseBuffer(actx);
+    src.loop = true;
+    const filt = actx.createBiquadFilter();
+    filt.type = 'highpass';
+    filt.frequency.setValueAtTime(6500, t0);
+    const g = actx.createGain();
+    g.gain.setValueAtTime(vol * 0.08, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(filt).connect(g).connect(mg);
+    src.start(t0);
+    src.stop(t0 + dur);
+  }
+
+  // 'o': open hi-hat
+  if (type.includes('o')) {
+    const dur = 0.11;
+    const src = actx.createBufferSource();
+    src.buffer = getNoiseBuffer(actx);
+    src.loop = true;
+    const filt = actx.createBiquadFilter();
+    filt.type = 'highpass';
+    filt.frequency.setValueAtTime(5200, t0);
+    const g = actx.createGain();
+    g.gain.setValueAtTime(vol * 0.11, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(filt).connect(g).connect(mg);
+    src.start(t0);
+    src.stop(t0 + dur);
+  }
+}
+
+const music = {
+  step: 0,
+  nextTime: 0,
+  stepDur: (60 / BPM) / 4,
+};
+
+function updateMusic(dt) {
+  if (muted || mode !== 'play') {
+    if (musicGain && actx) {
+      musicGain.gain.setValueAtTime(0.0001, actx.currentTime);
+    }
+    return;
+  }
+  const a = audio();
+  if (!a || a.state === 'suspended') return;
+  const mg = getMusicGain();
+  if (mg) {
+    mg.gain.setValueAtTime(0.075, a.currentTime);
+  }
+
+  if (music.nextTime === 0 || music.nextTime < a.currentTime - 0.25) {
+    music.nextTime = a.currentTime + 0.05;
+  }
+
+  // Lookahead loop scheduling up to 0.14 seconds ahead
+  while (music.nextTime < a.currentTime + 0.14) {
+    const s = music.step;
+    const t0 = music.nextTime;
+    const dur = music.stepDur;
+
+    // Equal-power crossfade weights between stages
+    const weights = { farm: 0, skate: 0, urban: 0, mountain: 0, beach: 0 };
+    if (bgTransition.active) {
+      const p = clamp(bgTransition.t / bgTransition.dur, 0, 1);
+      weights[bgTransition.from] = Math.cos(p * Math.PI * 0.5);
+      weights[bgTransition.to] = Math.sin(p * Math.PI * 0.5);
+    } else {
+      weights[currentBg] = 1.0;
+    }
+
+    for (const bgKey of BACKGROUNDS) {
+      const w = weights[bgKey];
+      if (w <= 0.001) continue;
+      const tr = STAGE_TRACKS[bgKey];
+      if (!tr) continue;
+
+      // 1. Lead voice
+      const lNote = tr.lead[s];
+      if (lNote) {
+        playMusicNote(m2f(lNote), dur * 0.94, t0, tr.leadVol * w, tr.leadWave);
+      }
+
+      // 2. Harmony / Arpeggio voice
+      const hNote = tr.harm[s];
+      if (hNote) {
+        playMusicNote(m2f(hNote), dur * 0.86, t0, tr.harmVol * w, tr.harmWave, bgKey === 'skate' ? 1800 : null);
+      }
+
+      // 3. Bass voice
+      const bNote = tr.bass[s];
+      if (bNote) {
+        playMusicNote(m2f(bNote), dur * 0.88, t0, tr.bassVol * w, tr.bassWave, 950);
+      }
+
+      // 4. Drums
+      const dCode = tr.drum[s];
+      if (dCode && dCode !== '0') {
+        playMusicDrum(dCode, t0, 0.65 * w);
+      }
+    }
+
+    music.step = (music.step + 1) % 64;
+    music.nextTime += music.stepDur;
+  }
+}
+
 // ---------- game state ----------
 let mode = 'menu';   // 'menu' | 'play' | 'results'
 let phase = 'cruise'; // 'cruise' | 'question' | 'go' | 'air' | 'finish'
@@ -755,6 +1126,7 @@ function update(dt) {
       bgTransition.active = false;
     }
   }
+  updateMusic(dt);
   const ramp = currentRamp();
   const dist = ramp ? ramp.x - rider.x : 1e9;
   let target = 300;
@@ -2308,6 +2680,9 @@ muteBtn.onclick = () => {
   muted = !muted;
   localStorage.setItem('bmx_muted', muted ? '1' : '0');
   muteBtn.textContent = muted ? '🔇' : '🔊';
+  if (muted && musicGain && actx) {
+    musicGain.gain.setValueAtTime(0.0001, actx.currentTime);
+  }
 };
 
 // ---------- main loop ----------

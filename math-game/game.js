@@ -13,7 +13,8 @@ const ctx = canvas.getContext('2d');
 // that is scaled to fit the screen height.
 const VH = 720;
 const GROUND = 560;
-const RIDER_X_FRAC = 0.28;
+const RIDER_X_FRAC_PLAY = 0.28;
+let riderXFrac = 0.12;
 const TOTAL_JUMPS = 10;
 const BIKE_SCALE = 1.5;
 let scale = 1;
@@ -1276,14 +1277,20 @@ function launch(r) {
   r.done = true;
   sfx.whoosh();
   const jinfo = JUMP_INFO[r.type] || JUMP_INFO.kicker;
+  const isMenu = mode === 'menu' || mode === 'results';
+  const textX = isMenu ? Math.max(90, VW * riderXFrac + 30) : VW * 0.64;
+  const titleSize = isMenu ? 38 : (tr.points >= 1000 ? 56 : 48);
+  const badgeSize = isMenu ? 26 : 36;
+  const subSize = isMenu ? 20 : 26;
+  const yShift = isMenu ? -35 : 0;
   if (tr.isStreakTrick) {
     sfx.streakUnlock();
-    addText(tr.badge, VW * 0.64, 180, 36, '#ffd600');
-    addText(tr.name, VW * 0.64, 235, 58, tr.color);
-    addText(`off the ${jinfo.name}!`, VW * 0.64, 290, 26, '#ffe082');
+    addText(tr.badge, textX, 180 + yShift, badgeSize, '#ffd600');
+    addText(tr.name, textX, 235 + yShift, titleSize, tr.color);
+    addText(`off the ${jinfo.name}!`, textX, 290 + yShift, subSize, '#ffe082');
   } else {
-    addText(tr.name, VW * 0.64, 235, tr.points >= 1000 ? 56 : 48, tr.color);
-    addText(`off the ${jinfo.name}!`, VW * 0.64, 285, 26, '#ffe082');
+    addText(tr.name, textX, 235 + yShift, titleSize, tr.color);
+    addText(`off the ${jinfo.name}!`, textX, 285 + yShift, subSize, '#ffe082');
   }
 }
 
@@ -1458,7 +1465,18 @@ function update(dt) {
     particles.push({ x: rider.x - 40, y: GROUND - rider.y - 2, vx: rand(-60, -20), vy: rand(-40, -10), g: 60, life: 0.5, max: 0.5, size: rand(3, 6), type: 'dust', color: dc });
   }
 
-  cam = rider.x - VW * RIDER_X_FRAC;
+  // Camera fraction: scoot rider to the left during menu/results so tricks are clearly visible
+  let targetFrac = RIDER_X_FRAC_PLAY;
+  if (mode === 'menu' || mode === 'results') {
+    const cardPixelWidth = Math.min(640, window.innerWidth - 40);
+    const cardLeftPixel = Math.max(40, (window.innerWidth - cardPixelWidth) / 2);
+    const cardLeftVirtual = cardLeftPixel / (canvas.height / VH);
+    const desiredX = Math.max(75, cardLeftVirtual * 0.46);
+    targetFrac = clamp(desiredX / VW, 0.08, 0.16);
+  }
+  riderXFrac += (targetFrac - riderXFrac) * Math.min(1, dt * 6);
+
+  cam = rider.x - VW * riderXFrac;
   ramps = ramps.filter((r) => r.x + (r.totalLen || (r.len + (r.back || 60))) > cam - 200);
 
   for (const p of particles) {
@@ -2627,7 +2645,7 @@ function drawBike(color, pose) {
 }
 
 function drawRider() {
-  const sx = VW * RIDER_X_FRAC;
+  const sx = VW * riderXFrac;
   const sy = GROUND - rider.y;
   let ang = rider.angle;
   if (rider.wobbleT > 0) ang += Math.sin(time * 28) * 0.12 * rider.wobbleT;

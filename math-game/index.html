@@ -68,6 +68,9 @@
 
       <button id="btn-start" class="big-btn">RIDE! 🚲</button>
       <div id="best-line"></div>
+      <div class="menu-action-row">
+        <button id="btn-parent-menu" class="parent-link-btn" title="View your child's math progress and strengths">📊 Parent Progress Report</button>
+      </div>
 
       <h3>Trick guide</h3>
       <div id="guide"></div>
@@ -84,7 +87,48 @@
       <div id="res-stats"></div>
       <div class="btn-row">
         <button id="btn-again" class="big-btn">Ride Again! 🔁</button>
+        <button id="btn-parent-res" class="big-btn alt" style="background:#7c4dff">📊 Progress</button>
         <button id="btn-menu" class="big-btn alt">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parent Math Progress Report Modal -->
+  <div id="parent-modal" class="overlay hidden">
+    <div class="card parent-card">
+      <div class="parent-header">
+        <div>
+          <h2>📊 Parent Math Report</h2>
+          <div class="parent-subtitle">Track your child's math strengths and practice areas over time</div>
+        </div>
+        <button id="btn-close-parent" class="parent-close-btn" title="Close">✕</button>
+      </div>
+
+      <div id="parent-summary-grid" class="parent-kpi-grid"></div>
+
+      <div class="parent-section">
+        <h3 class="section-title green">🌟 Strengths (Doing Well!)</h3>
+        <div id="parent-strengths-box"></div>
+      </div>
+
+      <div class="parent-section">
+        <h3 class="section-title orange">🎯 Focus Areas (Needs Practice)</h3>
+        <div id="parent-focus-box"></div>
+      </div>
+
+      <div class="parent-section">
+        <h3 class="section-title blue">📚 All Math Skills Breakdown</h3>
+        <div id="parent-skills-table"></div>
+      </div>
+
+      <div class="parent-section">
+        <h3 class="section-title purple">📝 Recent Tricky Facts (Review Together)</h3>
+        <div id="parent-misses-box"></div>
+      </div>
+
+      <div class="parent-footer">
+        <button id="btn-clear-stats" class="danger-btn">🗑️ Clear Stats / Start Fresh</button>
+        <button id="btn-back-parent" class="big-btn alt" style="margin-top:0">Back to Game</button>
       </div>
     </div>
   </div>

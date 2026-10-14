@@ -229,7 +229,7 @@ function makeProblem(level) {
     if (q !== lastQ) break;
   }
   lastQ = q;
-  return { text: q, answer: ans };
+  return { text: q, answer: ans, a, b, op };
 }
 
 // Adaptive problem generator for Dynamic Mode:
@@ -340,7 +340,140 @@ function makeDynamicProblem(stage) {
     if (q !== lastQ) break;
   }
   lastQ = q;
-  return { text: q, answer: ans, stage };
+  return { text: q, answer: ans, a, b, op, stage };
+}
+
+// ---------- Parent Math Stats & Progress Tracking ----------
+const STATS_KEY = 'bmx_math_stats_v1';
+
+const MATH_CATEGORIES = {
+  add_10:   { id: 'add_10',   name: 'Addition (within 10)',    op: '+', tip: 'Practice quick finger math and number pairs that make 10 (e.g. 6+4, 7+3).' },
+  add_20:   { id: 'add_20',   name: 'Addition (within 20)',    op: '+', tip: 'Use the "make 10" bridge strategy: 8 + 5 = 8 + 2 + 3 = 13.' },
+  add_100:  { id: 'add_100',  name: 'Addition (20 to 100)',    op: '+', tip: 'Add the tens first, then add the ones (e.g. 34 + 25 = 50 + 9 = 59).' },
+  sub_10:   { id: 'sub_10',   name: 'Subtraction (within 10)', op: '−', tip: 'Think of addition in reverse: 8 − 5 = ? think "what + 5 = 8?".' },
+  sub_20:   { id: 'sub_20',   name: 'Subtraction (within 20)', op: '−', tip: 'Bridge back to 10: 14 − 6 = 14 − 4 − 2 = 8, or count up from 6 to 14.' },
+  sub_100:  { id: 'sub_100',  name: 'Subtraction (20 to 100)', op: '−', tip: 'Subtract tens first, or count up from smaller number to bigger number.' },
+  mul_easy: { id: 'mul_easy', name: 'Times Tables (2s, 5s, 10s)', op: '×', tip: 'Sing skip-counting songs (2, 4, 6... / 5, 10, 15...). Remember 10s just add a 0!' },
+  mul_adv:  { id: 'mul_adv',  name: 'Times Tables (3s, 4s, 6–9s)', op: '×', tip: 'Double double for 4s (double then double again). Learn squares like 6×6=36, 7×7=49.' },
+};
+
+function getCategoryForProblem(prob) {
+  if (!prob) return 'add_10';
+  const op = prob.op;
+  const a = prob.a || 0, b = prob.b || 0;
+  if (op === '+') {
+    const sum = a + b;
+    if (sum <= 10) return 'add_10';
+    if (sum <= 20) return 'add_20';
+    return 'add_100';
+  } else if (op === '−' || op === '-') {
+    const maxVal = Math.max(a, b);
+    if (maxVal <= 10) return 'sub_10';
+    if (maxVal <= 20) return 'sub_20';
+    return 'sub_100';
+  } else if (op === '×' || op === '*') {
+    const minVal = Math.min(a, b);
+    if ([2, 5, 10].includes(minVal)) return 'mul_easy';
+    return 'mul_adv';
+  }
+  return 'add_10';
+}
+
+function initStats() {
+  const cats = {};
+  for (const k of Object.keys(MATH_CATEGORIES)) {
+    cats[k] = { attempts: 0, correct: 0, totalTime: 0 };
+  }
+  return {
+    version: 1,
+    totalAnswered: 0,
+    totalCorrect: 0,
+    totalTime: 0,
+    bestStreakEver: 0,
+    categories: cats,
+    recentMisses: [],
+    problemStats: {},
+  };
+}
+
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.categories) {
+        for (const k of Object.keys(MATH_CATEGORIES)) {
+          if (!parsed.categories[k]) parsed.categories[k] = { attempts: 0, correct: 0, totalTime: 0 };
+        }
+        if (!parsed.recentMisses) parsed.recentMisses = [];
+        if (!parsed.problemStats) parsed.problemStats = {};
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load math stats:', e);
+  }
+  return initStats();
+}
+
+let mathStats = loadStats();
+
+function saveStats() {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(mathStats));
+  } catch (e) {
+    console.warn('Failed to save math stats:', e);
+  }
+}
+
+function clearStats() {
+  mathStats = initStats();
+  saveStats();
+}
+
+function recordAnswer(prob, userTyped, ok, elapsed) {
+  if (!prob) return;
+  const catId = getCategoryForProblem(prob);
+  mathStats.totalAnswered++;
+  mathStats.totalTime += elapsed;
+  if (ok) mathStats.totalCorrect++;
+
+  if (game && game.streak) {
+    mathStats.bestStreakEver = Math.max(mathStats.bestStreakEver || 0, game.streak);
+  }
+
+  if (!mathStats.categories[catId]) {
+    mathStats.categories[catId] = { attempts: 0, correct: 0, totalTime: 0 };
+  }
+  const c = mathStats.categories[catId];
+  c.attempts++;
+  c.totalTime += elapsed;
+  if (ok) c.correct++;
+
+  const key = `${prob.a} ${prob.op} ${prob.b}`;
+  if (!mathStats.problemStats[key]) {
+    mathStats.problemStats[key] = { attempts: 0, correct: 0, totalTime: 0, answer: prob.answer };
+  }
+  const p = mathStats.problemStats[key];
+  p.attempts++;
+  p.totalTime += elapsed;
+  if (ok) p.correct++;
+
+  if (!ok) {
+    mathStats.recentMisses.unshift({
+      text: prob.text,
+      answer: prob.answer,
+      userTyped: userTyped || '?',
+      elapsed: elapsed,
+      catId: catId,
+      time: Date.now(),
+    });
+    if (mathStats.recentMisses.length > 15) {
+      mathStats.recentMisses.pop();
+    }
+  }
+
+  saveStats();
 }
 
 // ---------- sound (synthesized, no files needed) ----------
@@ -1108,6 +1241,7 @@ function submit() {
     sfx.wrong();
     showFeedback(false);
   }
+  recordAnswer(problem, typed, ok, elapsed);
   rider.trick = makeTrick(key, game.streak);
   const curRamp = currentRamp();
   if (curRamp) sizeRampForTrick(curRamp, rider.trick);
@@ -2849,10 +2983,190 @@ function showResults() {
   ui.results.classList.remove('hidden');
 }
 
+// ---------- Parent Dashboard & Report UI ----------
+function renderParentView() {
+  const stats = mathStats;
+  const total = stats.totalAnswered || 0;
+  const correct = stats.totalCorrect || 0;
+  const overallAcc = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const avgTime = total > 0 ? (stats.totalTime / total).toFixed(1) : '—';
+  const bestStreak = stats.bestStreakEver || 0;
+
+  // 1. KPI Grid
+  const kpiGrid = $('parent-summary-grid');
+  if (kpiGrid) {
+    kpiGrid.innerHTML = `
+      <div class="kpi-tile"><b>${total}</b><span>Problems Solved</span></div>
+      <div class="kpi-tile"><b style="color:${overallAcc >= 80 ? '#2e7d32' : overallAcc >= 60 ? '#f57c00' : '#d32f2f'}">${total > 0 ? overallAcc + '%' : '—'}</b><span>Overall Accuracy</span></div>
+      <div class="kpi-tile"><b>${avgTime !== '—' ? avgTime + 's' : '—'}</b><span>Avg Response Speed</span></div>
+      <div class="kpi-tile"><b style="color:#ff6d00">🔥 ${bestStreak}</b><span>Longest Streak</span></div>
+    `;
+  }
+
+  // Process category stats
+  const catEntries = Object.entries(MATH_CATEGORIES).map(([id, meta]) => {
+    const data = (stats.categories && stats.categories[id]) || { attempts: 0, correct: 0, totalTime: 0 };
+    const att = data.attempts || 0;
+    const corr = data.correct || 0;
+    const acc = att > 0 ? Math.round((corr / att) * 100) : 0;
+    const speed = att > 0 ? (data.totalTime / att).toFixed(1) : 0;
+    const misses = att - corr;
+    return { id, ...meta, attempts: att, correct: corr, acc, speed, misses };
+  });
+
+  // Strengths: attempts >= 3 and acc >= 80% (or attempts >= 2 and acc === 100%)
+  const strengths = catEntries
+    .filter((c) => (c.attempts >= 3 && c.acc >= 80) || (c.attempts >= 2 && c.acc === 100))
+    .sort((a, b) => b.acc - a.acc || a.speed - b.speed);
+
+  // Focus areas: attempts >= 2 and (acc < 75% or misses >= 2 or (attempts >= 3 && speed > 7.0))
+  const focusAreas = catEntries
+    .filter((c) => c.attempts >= 2 && (c.acc < 75 || c.misses >= 2 || (c.attempts >= 3 && c.speed > 7.0)))
+    .sort((a, b) => a.acc - b.acc || b.misses - a.misses);
+
+  // 2. Strengths Box
+  const strengthsBox = $('parent-strengths-box');
+  if (strengthsBox) {
+    if (strengths.length > 0) {
+      strengthsBox.innerHTML = strengths.map((s) => `
+        <div class="insight-card green">
+          <div class="insight-header">
+            <span>${s.op} ${s.name}</span>
+            <span style="color:#2e7d32">${s.acc}% Correct (${s.correct}/${s.attempts})</span>
+          </div>
+          <div class="insight-stats">
+            <span>⚡ Speed: <b>${s.speed} sec avg</b></span>
+            <span>💪 Mastery: <b>${s.acc >= 90 ? 'High Master 🌟' : 'Strong Recall 👍'}</b></span>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      strengthsBox.innerHTML = `
+        <div class="insight-empty">
+          ${total === 0
+            ? 'No problems answered yet! Play a few rounds to uncover strengths.'
+            : 'Strengths will highlight here once a skill reaches 80%+ accuracy with at least 3 attempts! Keep rolling! 🚲'}
+        </div>`;
+    }
+  }
+
+  // 3. Focus Areas Box
+  const focusBox = $('parent-focus-box');
+  if (focusBox) {
+    if (focusAreas.length > 0) {
+      focusBox.innerHTML = focusAreas.map((f) => `
+        <div class="insight-card orange">
+          <div class="insight-header">
+            <span>${f.op} ${f.name}</span>
+            <span style="color:#d84315">${f.acc}% Correct (${f.correct}/${f.attempts} • ${f.misses} miss${f.misses === 1 ? '' : 'es'})</span>
+          </div>
+          <div class="insight-stats">
+            <span>⏱️ Avg Speed: <b>${f.speed} sec</b></span>
+          </div>
+          <div class="insight-tip">💡 <b>Parent Tip:</b> ${f.tip}</div>
+        </div>
+      `).join('');
+    } else {
+      focusBox.innerHTML = `
+        <div class="insight-empty" style="border-color:#81c784; background:#f1f8e9; color:#2e7d32">
+          ${total === 0
+            ? 'Play some games to see which areas might need extra practice.'
+            : '🎉 Fantastic! No weak areas detected right now. Accuracy is solid across all practiced topics!'}
+        </div>`;
+    }
+  }
+
+  // 4. Skills Breakdown Table
+  const skillsTable = $('parent-skills-table');
+  if (skillsTable) {
+    skillsTable.innerHTML = catEntries.map((c) => {
+      let statusClass = 'none', statusLabel = 'Not Practiced';
+      let barColor = '#bbb';
+      if (c.attempts === 0) {
+        statusClass = 'none'; statusLabel = 'Not Attempted'; barColor = '#e0e0e0';
+      } else if (c.attempts >= 4 && c.acc >= 85) {
+        statusClass = 'master'; statusLabel = 'Mastered 🌟'; barColor = '#00c853';
+      } else if (c.acc >= 65 || c.attempts < 3) {
+        statusClass = 'practicing'; statusLabel = 'Practicing ⏳'; barColor = '#ffb300';
+      } else {
+        statusClass = 'needs-work'; statusLabel = 'Needs Work 🎯'; barColor = '#f44336';
+      }
+
+      const pct = c.attempts > 0 ? c.acc : 0;
+      const speedText = c.attempts > 0 ? `${c.speed}s avg` : '—';
+      const ratioText = c.attempts > 0 ? `${c.correct}/${c.attempts} (${c.acc}%)` : '0 attempts';
+
+      return `
+        <div class="skill-row">
+          <div class="skill-row-top">
+            <div class="skill-name">
+              <span class="skill-op-badge">${c.op}</span>
+              <span>${c.name}</span>
+            </div>
+            <span class="status-badge ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="skill-bar-wrap">
+            <div class="skill-bar-bg">
+              <div class="skill-bar-fill" style="width:${pct}%; background:${barColor}"></div>
+            </div>
+            <div class="skill-stats-text">${ratioText} • ${speedText}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 5. Recent Tricky Facts (Misses)
+  const missesBox = $('parent-misses-box');
+  if (missesBox) {
+    const misses = stats.recentMisses || [];
+    if (misses.length > 0) {
+      missesBox.innerHTML = `
+        <div class="parent-misses-grid">
+          ${misses.map((m) => `
+            <div class="miss-pill">
+              <div class="miss-q">${m.text} = <span class="miss-ans">${m.answer}</span></div>
+              <div class="miss-user">Entered: <b>${m.userTyped}</b> (${m.elapsed ? m.elapsed.toFixed(1) + 's' : '—'})</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      missesBox.innerHTML = `
+        <div class="insight-empty">
+          ${total === 0 ? 'No problems answered yet.' : '🌟 No recent misses recorded! Clean sheet!'}
+        </div>
+      `;
+    }
+  }
+}
+
+function openParentModal() {
+  audio();
+  renderParentView();
+  $('parent-modal').classList.remove('hidden');
+}
+
+function closeParentModal() {
+  $('parent-modal').classList.add('hidden');
+}
+
+function handleClearStats() {
+  if (confirm('Are you sure you want to clear all math stats to start fresh? This will reset all historical accuracy, strengths, and missed problem records.')) {
+    clearStats();
+    renderParentView();
+  }
+}
+
 $('btn-start').onclick = startGame;
 $('btn-again').onclick = startGame;
 $('btn-menu').onclick = goMenu;
 $('btn-home').onclick = goMenu;
+if ($('btn-parent-menu')) $('btn-parent-menu').onclick = openParentModal;
+if ($('btn-parent-res')) $('btn-parent-res').onclick = openParentModal;
+if ($('btn-close-parent')) $('btn-close-parent').onclick = closeParentModal;
+if ($('btn-back-parent')) $('btn-back-parent').onclick = closeParentModal;
+if ($('btn-clear-stats')) $('btn-clear-stats').onclick = handleClearStats;
 const muteBtn = $('btn-mute');
 muteBtn.textContent = muted ? '🔇' : '🔊';
 muteBtn.onclick = () => {

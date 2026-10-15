@@ -70,13 +70,18 @@
         <div class="topbar-title" id="map-player"></div>
         <div class="spacer"></div>
         <div class="pill" id="map-stars">⭐ 0</div>
-        <button class="btn small pwa-install-btn" id="btn-map-install" title="Install on iPad">📲 Install</button>
-        <button class="btn small" id="btn-practice" title="Practice tricky keys">🎯 Practice</button>
-        <button class="btn small" id="btn-collection">🦕 My Dinos</button>
+        <button class="btn small pwa-install-btn" id="btn-map-install" title="Install on iPad">📲 <span class="btn-text">Install</span></button>
+        <button class="btn small" id="btn-practice" title="Practice tricky keys">🎯 <span class="btn-text">Practice</span></button>
+        <button class="btn small" id="btn-collection" title="My Dino Friends">🦕 <span class="btn-text">My Dinos</span></button>
         <button class="btn small icon" id="btn-parents" title="Grown-ups">⚙️</button>
         <button class="btn small icon" id="btn-switch" title="Switch player">👥</button>
       </header>
       <div class="map-scroll" id="map-scroll"></div>
+      <button class="map-focus-btn" id="map-focus-btn" title="Scroll to your dino buddy"><span>🦖</span><span>My Dino</span></button>
+      <div class="map-level-modal" id="map-level-modal">
+        <div class="map-modal-backdrop" id="map-modal-backdrop"></div>
+        <div class="map-modal-card" id="map-modal-card" role="dialog" aria-modal="true"></div>
+      </div>
     </section>
 
     <!-- Gameplay -->

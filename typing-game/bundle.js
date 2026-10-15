@@ -3591,7 +3591,7 @@ function generateMapSVG(levelPoints, currentGlobalIndex = 0) {
   const unlockedPathD = pointsToPath(unlockedTrailPoints);
 
   return `
-    <svg class="map-svg-canvas" viewBox="0 0 ${MAP_WIDTH} ${MAP_HEIGHT}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+    <svg class="map-svg-canvas" viewBox="0 0 ${MAP_WIDTH} ${MAP_HEIGHT}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <!-- Biome vertical background linear gradients -->
         <linearGradient id="grad-sky" x1="0" y1="0" x2="0" y2="1">
@@ -4177,33 +4177,50 @@ class WorldMap {
     wrap.appendChild(canvasWrap);
 
     // 3. Floating "📍 My Dino" Jump Button
-    const focusBtn = document.createElement('button');
-    focusBtn.type = 'button';
-    focusBtn.className = 'map-focus-btn';
-    focusBtn.innerHTML = `<span>🦖</span><span>My Dino</span>`;
-    focusBtn.title = 'Scroll to your dino buddy';
-    focusBtn.addEventListener('click', () => {
+    let focusBtn = document.getElementById('map-focus-btn');
+    if (!focusBtn) {
+      focusBtn = document.createElement('button');
+      focusBtn.type = 'button';
+      focusBtn.className = 'map-focus-btn';
+      focusBtn.id = 'map-focus-btn';
+      focusBtn.innerHTML = `<span>🦖</span><span>My Dino</span>`;
+      focusBtn.title = 'Scroll to your dino buddy';
+      const screenMap = document.getElementById('screen-map');
+      if (screenMap) {
+        screenMap.appendChild(focusBtn);
+      } else {
+        wrap.appendChild(focusBtn);
+      }
+    }
+    focusBtn.onclick = () => {
       sfx.click();
       this.scrollToCurrentLevel(true);
-    });
-    wrap.appendChild(focusBtn);
+    };
 
     // 4. Level Preview Modal Container
-    const modal = document.createElement('div');
-    modal.className = 'map-level-modal';
-    modal.id = 'map-level-modal';
-    modal.innerHTML = `
-      <div class="map-modal-backdrop" id="map-modal-backdrop"></div>
-      <div class="map-modal-card" id="map-modal-card" role="dialog" aria-modal="true"></div>
-    `;
-    wrap.appendChild(modal);
+    let modal = document.getElementById('map-level-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'map-level-modal';
+      modal.id = 'map-level-modal';
+      modal.innerHTML = `
+        <div class="map-modal-backdrop" id="map-modal-backdrop"></div>
+        <div class="map-modal-card" id="map-modal-card" role="dialog" aria-modal="true"></div>
+      `;
+      const screenMap = document.getElementById('screen-map');
+      if (screenMap) {
+        screenMap.appendChild(modal);
+      } else {
+        wrap.appendChild(modal);
+      }
+    }
 
     this.container.appendChild(wrap);
 
     // Automatically center viewport on player's current level
     setTimeout(() => {
       this.scrollToCurrentLevel(false);
-    }, 80);
+    }, 60);
   }
 
   /**
@@ -4320,29 +4337,53 @@ class WorldMap {
   }
 
   /**
-   * Scrolls the map view to center on the player's active avatar.
+   * Scrolls the map view vertically to center on the player's active avatar.
+   * Strictly avoids horizontal scrolling or triggering browser inline shift bugs.
    */
   scrollToCurrentLevel(smooth = true) {
     const avatar = document.getElementById('map-player-avatar');
-    if (!avatar) return;
+    const scrollContainer = this.container;
+    if (!avatar || !scrollContainer) return;
 
-    avatar.scrollIntoView({
+    const avatarRect = avatar.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const currentScrollTop = scrollContainer.scrollTop;
+    const targetScrollTop = currentScrollTop + (avatarRect.top - containerRect.top) - (containerRect.height / 2) + (avatarRect.height / 2);
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      left: 0,
       behavior: smooth ? 'smooth' : 'auto',
-      block: 'center',
-      inline: 'center',
     });
+
+    scrollContainer.scrollLeft = 0;
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
   }
 
   /**
-   * Scrolls to a specific world's gateway banner.
+   * Scrolls vertically to a specific world's gateway banner.
    */
   scrollToWorld(worldId) {
     const banner = document.getElementById(`map-banner-${worldId}`);
-    if (banner) {
-      banner.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    const scrollContainer = this.container;
+    if (!banner || !scrollContainer) return;
+
+    const bannerRect = banner.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const currentScrollTop = scrollContainer.scrollTop;
+    const targetScrollTop = currentScrollTop + (bannerRect.top - containerRect.top) - 50;
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      left: 0,
+      behavior: 'smooth',
+    });
+
+    scrollContainer.scrollLeft = 0;
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
     }
   }
 

@@ -127,3 +127,30 @@ test('BACKGROUND_DINOS defines 12 friendly playing dinos with valid clearances',
   });
 });
 
+test('mobile world map prevents horizontal scrolling and overflow', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  const css = fs.readFileSync(path.join(dir, '..', 'css', 'style.css'), 'utf8');
+  const html = fs.readFileSync(path.join(dir, '..', 'index.html'), 'utf8');
+
+  // #screen-map has overflow: hidden and max-width: 100vw
+  assert.ok(css.includes('#screen-map {'), 'style.css defines #screen-map');
+  assert.ok(css.includes('max-width: 100vw;'), 'style.css bounds screen-map to 100vw');
+
+  // .map-scroll has touch-action: pan-y and overflow-x: hidden
+  assert.ok(css.includes('touch-action: pan-y;'), 'style.css sets touch-action: pan-y on map-scroll');
+  assert.ok(css.includes('overscroll-behavior-x: none;'), 'style.css disables horizontal overscroll');
+
+  // .map-canvas-wrap has aspect-ratio: 760 / 5400
+  assert.ok(css.includes('aspect-ratio: 760 / 5400;'), 'map-canvas-wrap defines aspect-ratio');
+
+  // Responsive topbar styling exists
+  assert.ok(css.includes('@media (max-width: 768px)'), 'style.css defines mobile topbar media query');
+
+  // HTML index.html contains direct map-focus-btn and map-level-modal
+  assert.ok(html.includes('id="map-focus-btn"'), 'index.html defines #map-focus-btn');
+  assert.ok(html.includes('id="map-level-modal"'), 'index.html defines #map-level-modal');
+});
+

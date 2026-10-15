@@ -199,7 +199,6 @@ class App {
       }
     } else {
       this.syncSettings();
-      this.renderMap();
       this.showScreen('map');
     }
   }

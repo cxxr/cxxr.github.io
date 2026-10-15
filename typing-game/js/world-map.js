@@ -1226,15 +1226,24 @@ export class WorldMap {
     const avatarRect = avatar.getBoundingClientRect();
     const containerRect = scrollContainer.getBoundingClientRect();
     const currentScrollTop = scrollContainer.scrollTop;
-    const targetScrollTop = currentScrollTop + (avatarRect.top - containerRect.top) - (containerRect.height / 2) + (avatarRect.height / 2);
+    const targetScrollTop = Math.max(0, currentScrollTop + (avatarRect.top - containerRect.top) - (containerRect.height / 2) + (avatarRect.height / 2));
 
-    scrollContainer.scrollTo({
-      top: Math.max(0, targetScrollTop),
-      left: 0,
-      behavior: smooth ? 'smooth' : 'auto',
-    });
+    if (!smooth) {
+      scrollContainer.style.scrollBehavior = 'auto';
+      scrollContainer.scrollTop = targetScrollTop;
+      scrollContainer.scrollLeft = 0;
+      setTimeout(() => {
+        if (scrollContainer) scrollContainer.style.scrollBehavior = '';
+      }, 50);
+    } else {
+      scrollContainer.scrollTo({
+        top: targetScrollTop,
+        left: 0,
+        behavior: 'smooth',
+      });
+      scrollContainer.scrollLeft = 0;
+    }
 
-    scrollContainer.scrollLeft = 0;
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
@@ -1243,23 +1252,31 @@ export class WorldMap {
   /**
    * Scrolls vertically to a specific world's gateway banner.
    */
-  scrollToWorld(worldId) {
+  scrollToWorld(worldId, smooth = true) {
     const banner = document.getElementById(`map-banner-${worldId}`);
     const scrollContainer = this.container;
     if (!banner || !scrollContainer) return;
 
+    const navBar = scrollContainer.querySelector('.map-world-nav');
+    const navHeight = navBar ? navBar.offsetHeight : 60;
+
     const bannerRect = banner.getBoundingClientRect();
     const containerRect = scrollContainer.getBoundingClientRect();
     const currentScrollTop = scrollContainer.scrollTop;
-    const targetScrollTop = currentScrollTop + (bannerRect.top - containerRect.top) - 50;
+    const targetScrollTop = Math.max(0, currentScrollTop + (bannerRect.top - containerRect.top) - navHeight - 12);
 
-    scrollContainer.scrollTo({
-      top: Math.max(0, targetScrollTop),
-      left: 0,
-      behavior: 'smooth',
-    });
+    if (!smooth) {
+      scrollContainer.scrollTop = targetScrollTop;
+      scrollContainer.scrollLeft = 0;
+    } else {
+      scrollContainer.scrollTo({
+        top: targetScrollTop,
+        left: 0,
+        behavior: 'smooth',
+      });
+      scrollContainer.scrollLeft = 0;
+    }
 
-    scrollContainer.scrollLeft = 0;
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }

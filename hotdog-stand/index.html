@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hot Dog Stand: The Works – Educational Business Simulation</title>
+  <meta name="description" content="A web-based business simulation game inspired by Hot Dog Stand: The Works that teaches children math, economics, and resource management.">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/simulation.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌭</text></svg>">
+</head>
+<body>
+  <div class="desktop-wrapper">
+    <!-- Retro OS Menu & Status Bar -->
+    <header class="retro-menubar">
+      <div class="menubar-left">
+        <span class="apple-icon">🌭</span>
+        <span class="app-brand-name">Hot Dog Stand: The Works</span>
+      </div>
+      <div class="menubar-right">
+        <span class="header-cash-pill">Bank: <strong id="header-cash-display">$250.00</strong></span>
+        <button class="menu-btn" id="header-btn-calc" title="Open Business Calculator">🧮 Calculator</button>
+        <button class="menu-btn" id="header-btn-sound" title="Toggle Sound">🔊 Sound On</button>
+        <button class="menu-btn" id="header-btn-help" title="Game Rules & Guide">❓ Help & Rules</button>
+        <button class="menu-btn" id="header-btn-reset" title="Start New Game">🔄 New Game</button>
+      </div>
+    </header>
+
+    <!-- Main Game Window Container -->
+    <main class="desktop-canvas">
+      <div id="app-root" class="app-root-container">
+        <!-- Screens render dynamically here -->
+      </div>
+    </main>
+
+    <!-- Retro Taskbar / Footer -->
+    <footer class="retro-taskbar">
+      <span>Sunburst Educational Series Homage · Web Edition</span>
+      <span class="version-tag">Version 1.0</span>
+    </footer>
+  </div>
+
+  <!-- Help & Curriculum Guide Modal -->
+  <div id="help-modal" class="modal-overlay hidden">
+    <div class="retro-window modal-window">
+      <div class="retro-titlebar">
+        <span class="retro-title-text">📖 Game Manual & Business Math Guide</span>
+        <button class="retro-close-btn" id="help-close-btn" aria-label="Close">✖</button>
+      </div>
+      <div class="modal-body-scroll">
+        <h2>Welcome to Hot Dog Stand: The Works!</h2>
+        <p>In this simulation, you take on the role of an entrepreneur running a hot dog stand across 8 major community and sporting events. Your mission is to reach your season profit target by making smart math and business choices!</p>
+
+        <hr class="retro-divider"/>
+
+        <h3>1. The Weather & Frankie's Forecast</h3>
+        <p>Before every event, check the forecast with <strong>Frankie the Weather Wiener</strong>:</p>
+        <ul>
+          <li><strong>Blazing Heatwave:</strong> Cold drinks (soda & lemonade) sell at double the normal rate! Hot food demand drops slightly.</li>
+          <li><strong>Chilly & Brisk:</strong> Hot cocoa and warm cider sell heavily, while cold drinks drop by 50%.</li>
+          <li><strong>Rain or Storms:</strong> Crowd size shrinks by 25% to 45%. Don't overbuy perishable supplies!</li>
+        </ul>
+
+        <h3>2. Managing Supplies & Perishability</h3>
+        <p>Packaging in the real world doesn't always line up 1-to-1:</p>
+        <ul>
+          <li><strong>Hot Dogs:</strong> Come in packs of 10, cartons of 50, or wholesale crates of 100. Refrigerated (lasts 2 events).</li>
+          <li><strong>Bakery Buns:</strong> Come in bags of 8, trays of 48, or bins of 96. <em>Highly perishable:</em> fresh buns spoil after 1 event!</li>
+          <li><strong>Condiments, Drinks, and Chips:</strong> Shelf-stable and roll over into future events.</li>
+        </ul>
+
+        <h3>3. Price Elasticity of Demand</h3>
+        <p>You can set any price you want, but customers respond to value:</p>
+        <ul>
+          <li><strong>Fair Price (~$2.75 for a hot dog):</strong> Healthy demand and steady sales.</li>
+          <li><strong>Discounted Price:</strong> Earns customer appreciation and slightly higher volume.</li>
+          <li><strong>Overpriced ($4.00+):</strong> Customers will cry <em>"Highway robbery!"</em> and refuse to buy, leaving you with unsold food and wasted expenses.</li>
+        </ul>
+
+        <h3>4. The Accounting Income Statement</h3>
+        <p>At the end of each day, review your financial statement:</p>
+        <div class="code-box">
+          Gross Revenue (Total Sales)<br/>
+          − Cost of Goods Sold (Supplies actually used)<br/>
+          = Gross Profit<br/>
+          − Operating Expenses (Advertising + Stand Permit)<br/>
+          − Spoilage Loss (Perishable food that went bad)<br/>
+          = <strong>Net Profit (or Loss!)</strong>
+        </div>
+
+        <h3>5. In-Game Calculator</h3>
+        <p>Click the <strong>🧮 Calculator</strong> button anytime to calculate bun-to-dog ratios or compute your profit margin percentage: <code>(Price − Cost) ÷ Price × 100</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

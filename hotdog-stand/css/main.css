@@ -1,0 +1,236 @@
+/**
+ * Main stylesheet for Hot Dog Stand: The Works.
+ * Retro 90s educational CD-ROM & Mac OS System 7/8 inspired aesthetic.
+ */
+
+:root {
+  --bg-desktop: #2E4057;
+  --window-bg: #EAE6DF;
+  --window-border: #1E293B;
+  --titlebar-bg: #1E3A8A;
+  --titlebar-text: #FFFFFF;
+  --panel-bg: #F8F6F0;
+  --panel-border: #CBD5E1;
+  --primary-accent: #DC2626;
+  --primary-hover: #B91C1C;
+  --secondary-accent: #2563EB;
+  --secondary-hover: #1D4ED8;
+  --success-color: #15803D;
+  --danger-color: #B91C1C;
+  --warning-color: #B45309;
+  --text-dark: #1E293B;
+  --text-muted: #64748B;
+  --bevel-light: #FFFFFF;
+  --bevel-dark: #64748B;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  font-family: var(--font-system);
+  color: var(--text-dark);
+  background-color: var(--bg-desktop);
+  background-image: 
+    radial-gradient(circle at 50% 50%, #374E6B 10%, transparent 11%),
+    radial-gradient(circle at 0% 0%, #374E6B 10%, transparent 11%);
+  background-size: 16px 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.desktop-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header Menu Bar */
+.retro-menubar {
+  background: #E2E8F0;
+  border-bottom: 2px solid var(--window-border);
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.menubar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-brand-name {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.2px;
+  color: #1E3A8A;
+}
+
+.menubar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-cash-pill {
+  background: #FEF08A;
+  border: 1.5px solid #CA8A04;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #854D0E;
+}
+
+.menu-btn {
+  background: #F1F5F9;
+  border: 1.5px solid #94A3B8;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 0px #FFF, 1px 1px 0px #64748B;
+  transition: all 0.1s ease;
+}
+
+.menu-btn:hover {
+  background: #E2E8F0;
+}
+
+.menu-btn:active {
+  box-shadow: inset 1px 1px 2px #64748B;
+  transform: translate(1px, 1px);
+}
+
+/* Desktop Workspace Canvas */
+.desktop-canvas {
+  flex: 1;
+  padding: 20px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.app-root-container {
+  width: 100%;
+  max-width: 980px;
+}
+
+/* Windows Styling */
+.retro-window {
+  background: var(--window-bg);
+  border: 2px solid var(--window-border);
+  border-radius: 6px;
+  box-shadow: 
+    4px 4px 0px rgba(0, 0, 0, 0.4),
+    inset 1px 1px 0px #FFFFFF;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.retro-titlebar {
+  background: var(--titlebar-bg);
+  background-image: linear-gradient(180deg, #2563EB 0%, #1E3A8A 100%);
+  color: var(--titlebar-text);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid var(--window-border);
+}
+
+.retro-title-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.titlebar-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+.badge-cash {
+  background: #FEF08A;
+  color: #854D0E;
+}
+
+.badge-weather {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+.badge-crowd {
+  background: #F1F5F9;
+  color: #334155;
+}
+
+.retro-close-btn {
+  background: #DC2626;
+  border: 1.5px solid #7F1D1D;
+  color: #FFF;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retro-close-btn:hover {
+  background: #B91C1C;
+}
+
+/* Footer taskbar */
+.retro-taskbar {
+  background: #CBD5E1;
+  border-top: 2px solid var(--window-border);
+  padding: 4px 16px;
+  font-size: 0.78rem;
+  color: #475569;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Utility text styles */
+.text-green { color: var(--success-color) !important; }
+.text-red { color: var(--danger-color) !important; }
+.text-blue { color: var(--secondary-accent) !important; }
+.text-right { text-align: right; }
+.full-width { width: 100%; }
+.hidden { display: none !important; }
+
+hr.retro-divider {
+  border: 0;
+  height: 2px;
+  background: #CBD5E1;
+  border-bottom: 1px solid #FFF;
+  margin: 12px 0;
+}

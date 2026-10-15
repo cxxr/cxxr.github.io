@@ -1,0 +1,19 @@
+{
+  "name": "hotdog-stand-the-works",
+  "version": "1.0.0",
+  "description": "Educational business and math simulation game inspired by Hot Dog Stand: The Works",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node test/simulation_test.js && node test/accounting_test.js"
+  },
+  "keywords": [
+    "hot-dog-stand",
+    "educational-game",
+    "business-simulation",
+    "math-game",
+    "economics-for-kids"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

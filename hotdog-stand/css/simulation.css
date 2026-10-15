@@ -1,0 +1,148 @@
+/**
+ * Simulation viewport, HUD bar, speed controls, and canvas animations.
+ */
+
+.sim-screen {
+  padding-bottom: 14px;
+}
+
+.sim-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Live HUD Bar */
+.sim-hud {
+  background: #0F172A;
+  border-bottom: 2px solid var(--window-border);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.hud-lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hud-val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #F8FAFC;
+}
+
+.hud-val.highlight {
+  color: #FDE047;
+}
+
+/* 2D Animated Canvas Viewport */
+.canvas-wrapper {
+  position: relative;
+  background: #000;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#sim-canvas {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  display: block;
+  background: #38BDF8;
+}
+
+.live-ticker {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  color: #F8FAFC;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.ticker-alert {
+  background: rgba(185, 28, 28, 0.95);
+  color: #FEF2F2;
+  border-color: #EF4444;
+}
+
+.ticker-happy {
+  background: rgba(21, 128, 61, 0.95);
+  color: #F0FDF4;
+  border-color: #22C55E;
+}
+
+.ticker-warning {
+  background: rgba(180, 83, 9, 0.95);
+  color: #FFFBEB;
+  border-color: #F59E0B;
+}
+
+/* Simulation Controls & Speed Toolbar */
+.sim-controls-bar {
+  background: #E2E8F0;
+  border-top: 2px solid var(--window-border);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.progress-bar-container {
+  background: #CBD5E1;
+  border: 1.5px solid #94A3B8;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.progress-bar-fill {
+  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
+  height: 100%;
+  transition: width 0.15s ease-out;
+}
+
+.speed-buttons-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.speed-btn.active {
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  border-color: #1E3A8A !important;
+}
+
+.btn-pause {
+  background: #FEF08A;
+  border-color: #CA8A04;
+  color: #854D0E;
+}

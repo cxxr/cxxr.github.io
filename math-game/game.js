@@ -2791,6 +2791,7 @@ function showQuiz() {
   ui.quiz.classList.remove('hidden');
   // restart the pop animation
   ui.quiz.style.animation = 'none'; void ui.quiz.offsetWidth; ui.quiz.style.animation = '';
+  updatePadState();
   ui.pad.classList.remove('hidden');
 }
 
@@ -2840,26 +2841,59 @@ function updateTimerUI() {
   }
 }
 
-function typeDigit(d) {
-  if (phase !== 'question' || typed.length >= 3) return;
-  typed += d; renderAnswer(); sfx.key();
+function getNeededDigits() {
+  if (!problem || problem.answer === undefined) return 1;
+  return String(Math.abs(problem.answer)).length;
 }
-function backspace() {
+
+let delBtn = null;
+
+function updatePadState() {
+  if (!delBtn) return;
+  const needed = getNeededDigits();
+  const showDel = needed >= 2 && typed.length > 0 && typed.length < needed;
+  delBtn.classList.toggle('hidden', !showDel);
+}
+
+function typeDigit(d) {
   if (phase !== 'question') return;
-  typed = typed.slice(0, -1); renderAnswer(); sfx.key();
+  const needed = getNeededDigits();
+  if (typed.length >= needed) return;
+  typed += d;
+  renderAnswer();
+  sfx.key();
+  updatePadState();
+  if (typed.length >= needed) {
+    submit();
+  }
+}
+
+function backspace() {
+  if (phase !== 'question' || typed.length === 0) return;
+  typed = typed.slice(0, -1);
+  renderAnswer();
+  sfx.key();
+  updatePadState();
 }
 
 // number pad
 function buildPad() {
-  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'del', 'go'];
+  ui.pad.innerHTML = '';
+  delBtn = null;
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'del'];
   for (const k of keys) {
     const b = document.createElement('button');
-    b.className = 'key' + (k === 'del' ? ' del' : k === 'go' ? ' go' : '');
-    b.textContent = k === 'del' ? '⌫' : k === 'go' ? 'GO!' : k;
+    b.className = 'key' + (k === 'del' ? ' del hidden' : '');
+    b.textContent = k === 'del' ? '⌫' : k;
+    if (k === 'del') {
+      delBtn = b;
+      b.title = 'Backspace';
+      b.setAttribute('aria-label', 'Backspace');
+    }
     b.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       audio();
-      if (k === 'del') backspace(); else if (k === 'go') submit(); else typeDigit(k);
+      if (k === 'del') backspace(); else typeDigit(k);
     });
     ui.pad.appendChild(b);
   }
@@ -2870,7 +2904,7 @@ addEventListener('keydown', (e) => {
   if (mode !== 'play') return;
   if (/^[0-9]$/.test(e.key)) typeDigit(e.key);
   else if (e.key === 'Backspace') { e.preventDefault(); backspace(); }
-  else if (e.key === 'Enter') submit();
+  else if (e.key === 'Enter') { if (typed !== '') submit(); }
 });
 
 // menu

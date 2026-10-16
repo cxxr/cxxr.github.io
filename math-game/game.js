@@ -923,6 +923,7 @@ const rider = {
   squash: 0, wobbleT: 0, blend: 0, pose: 'ride',
   // per-trick animation channels (radians)
   whip: 0, spin: 0, bar: 0, crankExtra: 0, lay: 0,
+  celebrationX: null, celebrationPtsY: null,
 };
 
 const settings = {
@@ -958,7 +959,7 @@ function cycleBackground() {
   };
   currentBg = nextBg;
   const info = BG_INFO[nextBg];
-  addText(info.banner, VW * 0.5, 190, 50, info.color);
+  addText(info.banner, VW * 0.5, 230, 48, info.color);
   sfx.cheer();
 }
 
@@ -975,7 +976,7 @@ function newGame() {
 function resetWorld() {
   Object.assign(rider, {
     x: 0, y: 0, angle: 0, speed: 300, trick: null, squash: 0, wobbleT: 0, blend: 0, pose: 'ride',
-    whip: 0, spin: 0, bar: 0, crankExtra: 0, lay: 0,
+    whip: 0, spin: 0, bar: 0, crankExtra: 0, lay: 0, celebrationX: null, celebrationPtsY: null,
   });
   ramps = []; particles = []; texts = [];
   phase = 'cruise';
@@ -1278,19 +1279,52 @@ function launch(r) {
   sfx.whoosh();
   const jinfo = JUMP_INFO[r.type] || JUMP_INFO.kicker;
   const isMenu = mode === 'menu' || mode === 'results';
-  const textX = isMenu ? Math.max(90, VW * riderXFrac + 30) : VW * 0.64;
-  const titleSize = isMenu ? 38 : (tr.points >= 1000 ? 56 : 48);
-  const badgeSize = isMenu ? 26 : 36;
-  const subSize = isMenu ? 20 : 26;
+  const textX = isMenu ? Math.max(90, VW * riderXFrac + 30) : (VW >= 1200 ? VW * 0.5 : Math.round(VW * 0.54));
+  const titleSize = isMenu ? 36 : (VW < 1100 ? (tr.points >= 1000 ? 46 : 40) : (tr.points >= 1000 ? 54 : 46));
+  const badgeSize = isMenu ? 24 : (VW < 1100 ? 28 : 34);
+  const subSize = isMenu ? 20 : (VW < 1100 ? 22 : 26);
   const yShift = isMenu ? -35 : 0;
-  if (tr.isStreakTrick) {
-    sfx.streakUnlock();
-    addText(tr.badge, textX, 180 + yShift, badgeSize, '#ffd600');
-    addText(tr.name, textX, 235 + yShift, titleSize, tr.color);
-    addText(`off the ${jinfo.name}!`, textX, 290 + yShift, subSize, '#ffe082');
+
+  if (isMenu) {
+    if (tr.isStreakTrick) {
+      sfx.streakUnlock();
+      addText(tr.badge, textX, 180 + yShift, badgeSize, '#ffd600');
+      addText(tr.name, textX, 235 + yShift, titleSize, tr.color);
+      addText(`off the ${jinfo.name}!`, textX, 290 + yShift, subSize, '#ffe082');
+    } else {
+      addText(tr.name, textX, 235 + yShift, titleSize, tr.color);
+      addText(`off the ${jinfo.name}!`, textX, 285 + yShift, subSize, '#ffe082');
+    }
+    rider.celebrationX = textX;
+    rider.celebrationPtsY = 330 + yShift;
   } else {
-    addText(tr.name, textX, 235 + yShift, titleSize, tr.color);
-    addText(`off the ${jinfo.name}!`, textX, 285 + yShift, subSize, '#ffe082');
+    let quizBottom = 185;
+    if (ui.quiz && !ui.quiz.classList.contains('hidden')) {
+      const qrect = ui.quiz.getBoundingClientRect();
+      if (qrect && qrect.bottom > 0) {
+        quizBottom = qrect.bottom * (VH / (window.innerHeight || 720));
+      }
+    }
+    const safeStartY = Math.max(240, Math.round(quizBottom + 36));
+
+    if (tr.isStreakTrick) {
+      sfx.streakUnlock();
+      const badgeY = safeStartY;
+      const nameY = badgeY + 46;
+      const descY = nameY + 46;
+      addText(tr.badge, textX, badgeY, badgeSize, '#ffd600');
+      addText(tr.name, textX, nameY, titleSize, tr.color);
+      addText(`off the ${jinfo.name}!`, textX, descY, subSize, '#ffe082');
+      rider.celebrationX = textX;
+      rider.celebrationPtsY = descY + 46;
+    } else {
+      const nameY = safeStartY + 10;
+      const descY = nameY + 46;
+      addText(tr.name, textX, nameY, titleSize, tr.color);
+      addText(`off the ${jinfo.name}!`, textX, descY, subSize, '#ffe082');
+      rider.celebrationX = textX;
+      rider.celebrationPtsY = descY + 46;
+    }
   }
 }
 
@@ -1312,17 +1346,19 @@ function land() {
   }
 
   if (mode === 'play') {
+    const ptsX = rider.celebrationX || (VW >= 1200 ? VW * 0.5 : Math.round(VW * 0.54));
+    const ptsY = rider.celebrationPtsY || 360;
     if (tr.points) {
       const mult = Math.min(3, 1 + (game.streak - 1) * 0.5);
       const pts = Math.round(tr.points * mult);
       game.score += pts;
-      addText(`+${pts}` + (mult > 1 ? `  (x${mult} combo!)` : ''), VW * 0.64, 330, 40, '#ffffff');
+      addText(`+${pts}` + (mult > 1 ? `  (x${mult} combo!)` : ''), ptsX, ptsY, 40, '#ffffff');
     } else {
       if (settings.level === 'dynamic' && game.missStreak >= 3) {
-        addText('CRASH! 💥', VW * 0.64, 330, 46, '#ff3b3b');
+        addText('CRASH! 💥', ptsX, ptsY, 46, '#ff3b3b');
         rider.wobbleT = 3;
       } else {
-        addText('Keep going! 💪', VW * 0.64, 330, 40, '#ffffff');
+        addText('Keep going! 💪', ptsX, ptsY, 40, '#ffffff');
       }
     }
     game.jump++;
@@ -1485,7 +1521,7 @@ function update(dt) {
   }
   particles = particles.filter((p) => p.life > 0);
 
-  for (const t of texts) { t.age += dt; t.y -= 25 * dt; }
+  for (const t of texts) { t.age += dt; t.y -= 12 * dt; }
   texts = texts.filter((t) => t.age < t.max);
 }
 
